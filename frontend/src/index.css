@@ -1,0 +1,30 @@
+@import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+@layer base {
+  body {
+    @apply m-0 min-h-screen bg-[#0c0f14] text-gray-200 antialiased;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  }
+
+  #root {
+    @apply min-h-screen;
+  }
+
+  input[type="range"] {
+    @apply appearance-none h-1.5 rounded-full bg-gray-700 cursor-pointer;
+  }
+  input[type="range"]::-webkit-slider-thumb {
+    @apply appearance-none w-3.5 h-3.5 rounded-full bg-white border-2 border-gray-500 cursor-pointer;
+  }
+
+  select {
+    @apply appearance-none bg-[length:16px_16px] bg-[right_8px_center] bg-no-repeat;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='%236b7280' d='M4.427 6.427l3.396 3.396a.25.25 0 00.354 0l3.396-3.396A.25.25 0 0011.396 6H4.604a.25.25 0 00-.177.427z'/%3E%3C/svg%3E");
+  }
+
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: #374151; border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: #4b5563; }
+}
