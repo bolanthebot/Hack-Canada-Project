@@ -5,7 +5,6 @@ import HeatmapLayer from '../components/Map/HeatmapLayer';
 import IntersectionMarkers from '../components/Intersection/IntersectionMarkers';
 import ReportModal from '../components/Intersection/ReportModal';
 import ParkingMarkers from '../components/Parking/ParkingMarkers';
-import ParkingPanel from '../components/Parking/ParkingPanel';
 import BikeSegments from '../components/Bike/BikeSegments';
 import BikeFilterPanel from '../components/Bike/BikeFilterPanel';
 import RouteSearchPanel from '../components/Map/RouteSearchPanel';
@@ -13,7 +12,7 @@ import RouteLayer from '../components/Map/RouteLayer';
 import { intersectionApi, parkingApi, bikeApi } from '../api';
 
 export default function HomePage() {
-  const [activeLayers, setActiveLayers] = useState(['intersections', 'parking', 'bike']);
+  const [activeLayers, setActiveLayers] = useState(['intersections', 'greenp', 'bike']);
   const [intersections, setIntersections] = useState([]);
   const [hotspots, setHotspots] = useState([]);
   const [parkingSpots, setParkingSpots] = useState([]);
@@ -80,8 +79,11 @@ export default function HomePage() {
           <HeatmapLayer points={intersections} />
         )}
 
-        {activeLayers.includes('parking') && (
-          <ParkingMarkers spots={parkingSpots} onUpdate={loadParking} />
+        {activeLayers.includes('greenp') && (
+          <ParkingMarkers 
+             spots={parkingSpots.filter(spot => spot.source === 'green_p')} 
+             onUpdate={loadParking} 
+          />
         )}
 
         {activeLayers.includes('bike') && (
@@ -99,8 +101,6 @@ export default function HomePage() {
       />
 
       <LayerControl activeLayers={activeLayers} onToggle={toggleLayer} />
-
-      {activeLayers.includes('parking') && <ParkingPanel />}
 
       {activeLayers.includes('bike') && (
         <BikeFilterPanel minScore={bikeMinScore} onMinScoreChange={setBikeMinScore} />
