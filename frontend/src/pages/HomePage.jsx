@@ -27,7 +27,7 @@ export default function HomePage() {
     if (!navigator.geolocation) return;
     navigator.geolocation.getCurrentPosition(
       (pos) => setUserLocation([pos.coords.latitude, pos.coords.longitude]),
-      () => {},
+      () => { },
       { enableHighAccuracy: true, timeout: 8000 },
     );
   }, []);
@@ -68,29 +68,33 @@ export default function HomePage() {
   };
 
   return (
-    <div className="relative w-full h-screen">
-      <MapContainer center={userLocation} userLocation={userLocation} onMapClick={setClickedDest}>
-        <ReportModal onReported={loadIntersections} />
+    <div className="relative w-full h-screen overflow-hidden bg-[#0c0f14]">
+      {/* Background Map */}
+      <div className="absolute inset-0 z-0">
+        <MapContainer center={userLocation} userLocation={userLocation} onMapClick={setClickedDest}>
+          <ReportModal onReported={loadIntersections} />
 
-        {activeLayers.includes('intersections') && (
-          <IntersectionMarkers reports={intersections} grouped={hotspots} />
-        )}
+          {activeLayers.includes('intersections') && (
+            <IntersectionMarkers reports={intersections} grouped={hotspots} />
+          )}
 
-        {activeLayers.includes('heatmap') && (
-          <HeatmapLayer points={intersections} />
-        )}
+          {activeLayers.includes('heatmap') && (
+            <HeatmapLayer points={intersections} />
+          )}
 
-        {activeLayers.includes('parking') && (
-          <ParkingMarkers spots={parkingSpots} onUpdate={loadParking} />
-        )}
+          {activeLayers.includes('parking') && (
+            <ParkingMarkers spots={parkingSpots} onUpdate={loadParking} />
+          )}
 
-        {activeLayers.includes('bike') && (
-          <BikeSegments segments={bikeSegments} />
-        )}
+          {activeLayers.includes('bike') && (
+            <BikeSegments segments={bikeSegments} />
+          )}
 
-        {route && <RouteLayer route={route} />}
-      </MapContainer>
+          {route && <RouteLayer route={route} />}
+        </MapContainer>
+      </div>
 
+      {/* Primary Overlays */}
       <RouteSearchPanel
         userLocation={userLocation}
         clickedDest={clickedDest}
@@ -100,11 +104,18 @@ export default function HomePage() {
 
       <LayerControl activeLayers={activeLayers} onToggle={toggleLayer} />
 
-      {activeLayers.includes('parking') && <ParkingPanel />}
+      {/* Contextual Panels */}
+      <div className="absolute bottom-0 left-0 right-0 pointer-events-none p-4 flex justify-between items-end z-[1001]">
+        <div className="pointer-events-auto">
+          {activeLayers.includes('parking') && <ParkingPanel />}
+        </div>
 
-      {activeLayers.includes('bike') && (
-        <BikeFilterPanel minScore={bikeMinScore} onMinScoreChange={setBikeMinScore} />
-      )}
+        <div className="pointer-events-auto">
+          {activeLayers.includes('bike') && (
+            <BikeFilterPanel minScore={bikeMinScore} onMinScoreChange={setBikeMinScore} />
+          )}
+        </div>
+      </div>
     </div>
   );
 }
