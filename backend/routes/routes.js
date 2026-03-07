@@ -1,3 +1,4 @@
+
 const router = require('express').Router();
 const axios = require('axios');
 const { decode } = require('@googlemaps/polyline-codec');
@@ -628,6 +629,181 @@ Return ONLY a JSON object, no markdown fences, no preamble:
     console.error('Status:', err.response?.status);
     console.error('Stack:', err.stack?.split('\n').slice(0, 4).join('\n'));
     res.status(500).json({ error: 'Market intelligence unavailable', fallback: true, message: err.message });
+  }
+});
+
+
+// ---------------------------------------------------------------------------
+// POST /api/routes/price-forecast
+//
+// Pure statistical forecast from Ontario Open Data CSV — no AI, no external APIs.
+// Uses seasonal patterns, linear regression, and volatility scoring.
+// Request body: { city?: "toronto"|"ottawa"|"montreal" }
+// ---------------------------------------------------------------------------
+router.post('/price-forecast', async (req, res) => {
+  const { city = 'toronto' } = req.body;
+
+  console.log('\n========== PRICE FORECAST ==========');
+  console.log(`City: ${city}`);
+
+  try {
+    const history = await fetchOntarioPriceHistory();
+
+    if (history.length < 12) {
+      return res.status(500).json({ error: 'Insufficient historical data' });
+    }
+
+    const cityKey = ['toronto', 'ottawa', 'montreal'].includes(city.toLowerCase())
+      ? city.toLowerCase() : 'toronto';
+
+    // Extract price series for chosen city
+    const series = history
+      .map(r => ({ date: r.date, price: r[cityKey] }))
+      .filter(r => r.price != null && !isNaN(r.price));
+
+    const prices = series.map(r => r.price);
+    const n = prices.length;
+
+    // -----------------------------------------------------------------------
+    // 1. SEASONAL ANALYSIS
+    // Group all historical data points by month (1-12), compute average price
+    // per month across all years, then compare current month vs next month avg
+    // -----------------------------------------------------------------------
+    const monthlyAvgs = Array(13).fill(null).map(() => ({ sum: 0, count: 0 }));
+
+    series.forEach(r => {
+      const month = parseInt(r.date.split('-')[1], 10);
+      if (!isNaN(month)) {
+        monthlyAvgs[month].sum += r.price;
+        monthlyAvgs[month].count += 1;
+      }
+    });
+
+    const avgByMonth = monthlyAvgs.map(m => m.count > 0 ? m.sum / m.count : null);
+
+    const now = new Date();
+    const currentMonth = now.getMonth() + 1; // 1-12
+    const nextMonth = currentMonth === 12 ? 1 : currentMonth + 1;
+    const in4Weeks = currentMonth === 12 ? 1 : (currentMonth + 1 > 12 ? 1 : currentMonth + 1);
+
+    const currentMonthAvg = avgByMonth[currentMonth];
+    const nextMonthAvg = avgByMonth[nextMonth];
+    const seasonalDelta = currentMonthAvg && nextMonthAvg
+      ? parseFloat((nextMonthAvg - currentMonthAvg).toFixed(2))
+      : 0;
+
+    const monthNames = ['', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    console.log(`Seasonal: ${monthNames[currentMonth]} avg=${currentMonthAvg?.toFixed(1)}¢ → ${monthNames[nextMonth]} avg=${nextMonthAvg?.toFixed(1)}¢ (delta: ${seasonalDelta > 0 ? '+' : ''}${seasonalDelta}¢)`);
+
+    // -----------------------------------------------------------------------
+    // 2. LINEAR REGRESSION on last 8 data points
+    // y = price, x = index (0..7)
+    // slope = (n*sum_xy - sum_x*sum_y) / (n*sum_x2 - sum_x^2)
+    // -----------------------------------------------------------------------
+    const recent8 = prices.slice(-8);
+    const r8n = recent8.length;
+    let sum_x = 0, sum_y = 0, sum_xy = 0, sum_x2 = 0;
+
+    for (let i = 0; i < r8n; i++) {
+      sum_x += i;
+      sum_y += recent8[i];
+      sum_xy += i * recent8[i];
+      sum_x2 += i * i;
+    }
+
+    const slope = (r8n * sum_xy - sum_x * sum_y) / (r8n * sum_x2 - sum_x * sum_x);
+    // Each data point is ~1 month apart, 4 weeks ≈ 1 data point ahead
+    const regressionDelta = parseFloat((slope * 1).toFixed(2));
+    const currentPrice = prices[n - 1];
+
+    console.log(`Regression: slope=${slope.toFixed(3)}¢/period over last 8 months → projected delta: ${regressionDelta > 0 ? '+' : ''}${regressionDelta}¢`);
+
+    // -----------------------------------------------------------------------
+    // 3. VOLATILITY — standard deviation of last 12 data points
+    // -----------------------------------------------------------------------
+    const recent12 = prices.slice(-12);
+    const mean12 = recent12.reduce((a, b) => a + b, 0) / recent12.length;
+    const variance = recent12.reduce((acc, p) => acc + (p - mean12) ** 2, 0) / recent12.length;
+    const stdDev = parseFloat(Math.sqrt(variance).toFixed(2));
+    const volatilityLabel = stdDev > 8 ? 'high' : stdDev > 4 ? 'medium' : 'low';
+
+    console.log(`Volatility: stdDev=${stdDev}¢ (${volatilityLabel})`);
+
+    // -----------------------------------------------------------------------
+    // 4. COMBINED SIGNAL
+    // Weight: seasonal 40%, regression 40%, volatility 20%
+    // -----------------------------------------------------------------------
+    const combinedDelta = parseFloat(((seasonalDelta * 0.4) + (regressionDelta * 0.4)).toFixed(2));
+    const projectedLow = Math.round(currentPrice + combinedDelta - stdDev * 0.5);
+    const projectedHigh = Math.round(currentPrice + combinedDelta + stdDev * 0.5);
+
+    // Recommendation logic
+    let recommendation, recommendationReason;
+
+    if (combinedDelta > 3 || volatilityLabel === 'high' && combinedDelta > 0) {
+      recommendation = 'fill_now';
+      recommendationReason = `Prices are projected to rise ~${Math.abs(combinedDelta)}¢/L over the next 4 weeks based on seasonal patterns and recent trend. High volatility means waiting is risky.`;
+    } else if (combinedDelta < -3) {
+      recommendation = 'wait';
+      recommendationReason = `Prices are projected to drop ~${Math.abs(combinedDelta)}¢/L over the next 4 weeks. Historically ${monthNames[nextMonth]} is cheaper than ${monthNames[currentMonth]}.`;
+    } else {
+      recommendation = 'neutral';
+      recommendationReason = `Prices are projected to remain relatively stable (±${Math.abs(combinedDelta)}¢/L). Fill up when convenient.`;
+    }
+
+    // Best month to fill up (cheapest historical average)
+    const cheapestMonth = avgByMonth
+      .map((avg, i) => ({ month: i, avg }))
+      .filter(m => m.avg !== null && m.month >= 1)
+      .sort((a, b) => a.avg - b.avg)[0];
+
+    const mostExpensiveMonth = avgByMonth
+      .map((avg, i) => ({ month: i, avg }))
+      .filter(m => m.avg !== null && m.month >= 1)
+      .sort((a, b) => b.avg - a.avg)[0];
+
+    // Build full seasonal table for frontend chart
+    const seasonalTable = Array.from({ length: 12 }, (_, i) => ({
+      month: monthNames[i + 1],
+      avgPrice: avgByMonth[i + 1] ? parseFloat(avgByMonth[i + 1].toFixed(1)) : null,
+    }));
+
+    console.log(`Signal: ${combinedDelta > 0 ? '+' : ''}${combinedDelta}¢ combined | projected ${projectedLow}-${projectedHigh}¢ | ${recommendation}`);
+    console.log('=====================================\n');
+
+    res.json({
+      city: cityKey,
+      currentPriceCents: currentPrice,
+      forecast: {
+        seasonalDeltaCents: seasonalDelta,
+        regressionDeltaCents: regressionDelta,
+        combinedDeltaCents: combinedDelta,
+        projectedRangeLow: projectedLow,
+        projectedRangeHigh: projectedHigh,
+        projectionHorizon: '4 weeks',
+      },
+      volatility: {
+        stdDevCents: stdDev,
+        level: volatilityLabel,
+      },
+      seasonal: {
+        currentMonth: monthNames[currentMonth],
+        nextMonth: monthNames[nextMonth],
+        cheapestMonth: monthNames[cheapestMonth.month],
+        cheapestMonthAvg: parseFloat(cheapestMonth.avg.toFixed(1)),
+        mostExpensiveMonth: monthNames[mostExpensiveMonth.month],
+        mostExpensiveMonthAvg: parseFloat(mostExpensiveMonth.avg.toFixed(1)),
+        table: seasonalTable,
+      },
+      recommendation,
+      recommendationReason,
+      dataPointsUsed: n,
+      dataFrom: series[0].date,
+      dataTo: series[n - 1].date,
+    });
+  } catch (err) {
+    console.error('Price forecast error:', err.message);
+    res.status(500).json({ error: err.message });
   }
 });
 
