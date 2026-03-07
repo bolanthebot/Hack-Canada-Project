@@ -7,7 +7,7 @@ export default function AppLayout() {
   const [collapsed, setCollapsed] = useState(false);
 
   return (
-    <div className="flex min-h-screen bg-white">
+    <div className="flex h-screen bg-white overflow-hidden">
       <Toaster
         position="bottom-right"
         toastOptions={{
@@ -26,7 +26,7 @@ export default function AppLayout() {
       />
       <Sidebar collapsed={collapsed} onToggle={() => setCollapsed(!collapsed)} />
       <main
-        className={`flex-1 transition-all duration-300 ${collapsed ? 'ml-[72px]' : 'ml-64'}`}
+        className={`flex-1 h-full overflow-y-auto transition-all duration-300 ${collapsed ? 'ml-[72px]' : 'ml-64'}`}
       >
         <Outlet />
       </main>

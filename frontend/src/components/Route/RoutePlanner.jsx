@@ -58,7 +58,7 @@ export default function RoutePlanner() {
   };
 
   return (
-    <div className="min-h-screen p-8 lg:p-12 bg-gray-50/30">
+    <div className="p-8 lg:p-12 bg-gray-50/30">
       <div className="max-w-[1240px] mx-auto">
         <div className="mb-12 animate-in fade-in slide-in-from-top-4 duration-700">
           <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-50 border border-blue-100 mb-4">

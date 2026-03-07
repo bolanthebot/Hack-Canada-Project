@@ -42,29 +42,16 @@ export default function MapContainer({ children, center, userLocation, onMapClic
       {onMapClick && <ClickHandler onMapClick={onMapClick} />}
 
       {userLocation && (
-        <>
-          <CircleMarker
-            center={userLocation}
-            radius={14}
-            pathOptions={{
-              color: '#2563eb',
-              fillColor: '#2563eb',
-              fillOpacity: 0.1,
-              weight: 0,
-            }}
-            className="marker-pulse"
-          />
-          <CircleMarker
-            center={userLocation}
-            radius={7}
-            pathOptions={{
-              color: '#ffffff',
-              fillColor: '#2563eb',
-              fillOpacity: 1,
-              weight: 3,
-            }}
-          />
-        </>
+        <CircleMarker
+          center={userLocation}
+          radius={7}
+          pathOptions={{
+            color: '#ffffff',
+            fillColor: '#2563eb',
+            fillOpacity: 1,
+            weight: 3,
+          }}
+        />
       )}
 
       {children}

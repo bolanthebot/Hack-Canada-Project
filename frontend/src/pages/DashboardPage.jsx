@@ -39,7 +39,7 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#fafbfc] p-8 lg:p-16 overflow-y-auto">
+    <div className="p-8 lg:p-16">
       <div className="max-w-[1600px] mx-auto">
         {/* Header Section */}
         <div className="mb-16 flex flex-col xl:flex-row xl:items-end justify-between gap-10 animate-in fade-in slide-in-from-top-8 duration-1000 ease-out">
