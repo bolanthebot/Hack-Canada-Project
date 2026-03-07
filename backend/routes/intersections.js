@@ -14,7 +14,25 @@ router.get('/', async (req, res) => {
 // POST /api/intersections — create a report
 router.post('/', async (req, res) => {
   try {
-    const report = await Intersection.create(req.body);
+    const { location, reportType, severity, description } = req.body;
+
+    if (!location || !location.coordinates) {
+      return res.status(400).json({ error: 'location with coordinates is required' });
+    }
+    if (!reportType) {
+      return res.status(400).json({ error: 'reportType is required' });
+    }
+    if (!severity || severity < 1 || severity > 5) {
+      return res.status(400).json({ error: 'severity must be between 1 and 5' });
+    }
+
+    const report = await Intersection.create({
+      location,
+      reportType,
+      severity,
+      description: description || ''
+    });
+
     res.status(201).json(report);
   } catch (err) {
     res.status(400).json({ error: err.message });

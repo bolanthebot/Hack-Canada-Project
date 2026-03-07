@@ -17,8 +17,16 @@ router.post('/', async (req, res) => {
     const { location, status, streetName } = req.body;
 
     // Try to find an existing spot near these coordinates
+    // const existing = await Parking.findOne({
+    //   'location.coordinates': location.coordinates,
+    // });
     const existing = await Parking.findOne({
-      'location.coordinates': location.coordinates,
+      location: {
+        $near: {
+          $geometry: { type: "Point", coordinates: location.coordinates },
+          $maxDistance: 10 // within 10 meters
+        }
+      }
     });
 
     if (existing) {
