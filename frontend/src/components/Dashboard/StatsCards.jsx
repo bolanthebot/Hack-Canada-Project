@@ -27,31 +27,25 @@ const IconTrend = () => (
   </svg>
 );
 
-const StatCard = ({ value, label, sub, Icon, colorClass, gradientClass }) => (
-  <div className="bg-white border border-gray-100 rounded-[2.5rem] p-8 flex flex-col justify-between min-h-[220px] shadow-[0_10px_40px_-15px_rgba(0,0,0,0.03)] hover:shadow-[0_20px_60px_-15px_rgba(0,0,0,0.08)] transition-all duration-700 group hover:-translate-y-1">
-    <div className="flex justify-between items-start mb-6">
-      <div className={`w-14 h-14 rounded-3xl flex items-center justify-center bg-gradient-to-br ${gradientClass} ${colorClass} shadow-lg shadow-current/10 group-hover:scale-110 transition-all duration-500`}>
-        <Icon />
-      </div>
-      <div className="w-2 h-2 rounded-full bg-gray-100 group-hover:animate-ping"></div>
+const StatCard = ({ value, label, sub, Icon, colorClass }) => (
+  <div className="bg-white border border-gray-100/80 rounded-[2rem] p-6 flex items-center gap-6 shadow-[0_8px_30px_rgb(0,0,0,0.02)] hover:shadow-[0_20px_50px_rgb(0,0,0,0.06)] transition-all duration-500 group">
+    <div className={`w-12 h-12 rounded-2xl flex items-center justify-center bg-gray-50 ${colorClass} group-hover:bg-current group-hover:text-white transition-all duration-500`}>
+      <Icon />
     </div>
 
-    <div>
-      <div className="flex items-baseline gap-1">
-        <div className="text-4xl font-black text-gray-900 mb-2 tracking-tighter tabular-nums">
-          {value}
-        </div>
-        <span className="text-[10px] font-black text-gray-300 uppercase tracking-widest hidden group-hover:block animate-in fade-in duration-500">Live</span>
-      </div>
-
-      <div className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-3 leading-none">
+    <div className="flex-1">
+      <div className="text-[9px] font-black text-gray-300 uppercase tracking-[0.3em] mb-1">
         {label}
       </div>
-
-      <div className="text-[11px] font-bold text-gray-500 bg-gray-50 px-3 py-1.5 rounded-xl border border-gray-100 w-fit">
+      <div className="text-2xl font-black text-gray-900 tracking-tighter tabular-nums mb-0.5">
+        {value}
+      </div>
+      <div className="text-[10px] font-bold text-gray-400">
         {sub}
       </div>
     </div>
+
+    <div className="w-1.5 h-1.5 rounded-full bg-gray-100 group-hover:bg-blue-500 transition-colors duration-500"></div>
   </div>
 );
 
