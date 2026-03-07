@@ -12,7 +12,7 @@ import { intersectionApi, parkingApi, bikeApi, routeApi } from '../api';
 import toast from 'react-hot-toast';
 
 export default function HomePage() {
-  const [activeLayers, setActiveLayers] = useState(['intersections', 'greenp', 'street_parking', 'bike']);
+  const [activeLayers, setActiveLayers] = useState(['intersections','heatmap']);
   const [intersections, setIntersections] = useState([]);
   const [hotspots, setHotspots] = useState([]);
   const [parkingSpots, setParkingSpots] = useState([]);
