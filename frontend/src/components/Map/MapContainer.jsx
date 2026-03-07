@@ -7,7 +7,7 @@ const DEFAULT_CENTER = [43.6532, -79.3832];
 function FlyToCenter({ center }) {
   const map = useMap();
   useEffect(() => {
-    if (center) map.flyTo(center, 14, { duration: 1.5, easeLinearity: 0.25 });
+    if (center) map.flyTo(center, 14, { duration: 2, easeLinearity: 0.1 });
   }, [center, map]);
   return null;
 }
@@ -28,18 +28,14 @@ export default function MapContainer({ children, center, userLocation, onMapClic
       zoom={13}
       zoomControl={false}
       className={`w-full h-full animate-in fade-in duration-1000 ${className}`}
-      style={{ minHeight: '100vh', background: '#0c0f14' }}
+      style={{ minHeight: '100vh', background: '#f8f9fa' }}
     >
       <ZoomControl position="bottomright" />
-      <TileLayer
-        attribution='&copy; <a href="https://carto.com/">CARTO</a>'
-        url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager_nolabels/{z}/{x}/{y}{r}.png"
-      />
 
-      {/* Label layer on top for better readability */}
+      {/* Standard OpenStreetMap Style (Vibrant Colors, Yellow Roads) */}
       <TileLayer
-        attribution='&copy; <a href="https://carto.com/">CARTO</a>'
-        url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager_only_labels/{z}/{x}/{y}{r}.png"
+        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
 
       {center && <FlyToCenter center={center} />}
@@ -49,22 +45,23 @@ export default function MapContainer({ children, center, userLocation, onMapClic
         <>
           <CircleMarker
             center={userLocation}
-            radius={12}
+            radius={14}
             pathOptions={{
-              color: '#3b82f6',
-              fillColor: '#3b82f6',
-              fillOpacity: 0.15,
+              color: '#2563eb',
+              fillColor: '#2563eb',
+              fillOpacity: 0.1,
               weight: 0,
             }}
+            className="marker-pulse"
           />
           <CircleMarker
             center={userLocation}
-            radius={6}
+            radius={7}
             pathOptions={{
               color: '#ffffff',
-              fillColor: '#3b82f6',
+              fillColor: '#2563eb',
               fillOpacity: 1,
-              weight: 2,
+              weight: 3,
             }}
           />
         </>

@@ -4,12 +4,21 @@ import { parkingApi } from '../../api';
 import toast from 'react-hot-toast';
 
 function createParkingIcon(status) {
-  const color = status === 'available' ? '#34d399' : '#f87171';
+  const color = status === 'available' ? '#10b981' : '#f43f5e';
   return L.divIcon({
-    html: `<svg width="16" height="16" viewBox="0 0 16 16"><rect x="3" y="3" width="10" height="10" rx="2" fill="${color}" opacity="0.85"/></svg>`,
+    html: `
+      <div style="
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        background: ${color};
+        border: 3px solid white;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      "></div>
+    `,
     className: '',
-    iconSize: [16, 16],
-    iconAnchor: [8, 8],
+    iconSize: [18, 18],
+    iconAnchor: [9, 9],
   });
 }
 
@@ -17,7 +26,6 @@ export default function ParkingMarkers({ spots, onUpdate }) {
   const toggleStatus = async (spot) => {
     const newStatus = spot.status === 'available' ? 'taken' : 'available';
     try {
-      // NOTE: Parking backend has been deleted.
       await parkingApi.report({
         location: spot.location,
         status: newStatus,

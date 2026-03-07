@@ -14,24 +14,24 @@ const PIE_COLORS = ['#f43f5e', '#3b82f6', '#f59e0b', '#8b5cf6'];
 
 const tt = {
   contentStyle: {
-    background: '#161a23',
-    border: '1px solid rgba(255,255,255,0.08)',
-    borderRadius: 12,
-    color: '#f3f4f6',
+    background: '#ffffff',
+    border: '1px solid rgba(0,0,0,0.05)',
+    borderRadius: 16,
+    color: '#1f2937',
     fontSize: 12,
-    fontWeight: 500,
+    fontWeight: 600,
     fontFamily: 'Inter, sans-serif',
-    padding: '10px 14px',
-    boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.3)',
+    padding: '12px 16px',
+    boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1)',
   },
-  cursor: { fill: 'rgba(255,255,255,0.03)' },
+  cursor: { fill: 'rgba(0,0,0,0.02)' },
 };
 
 function ChartCard({ title, children, wide }) {
   return (
-    <div className={`nav-card !bg-white/[0.02] border-white/5 p-6 ${wide ? 'lg:col-span-2' : ''} animate-in fade-in slide-in-from-bottom-2 duration-500`}>
-      <h3 className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-6">{title}</h3>
-      <div style={{ width: '100%', height: 260 }}>
+    <div className={`nav-card !bg-white border-gray-100 p-8 ${wide ? 'lg:col-span-2' : ''} animate-in fade-in slide-in-from-bottom-2 duration-500 shadow-sm hover:shadow-md transition-shadow`}>
+      <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-8">{title}</h3>
+      <div style={{ width: '100%', height: 280 }}>
         <ResponsiveContainer>{children}</ResponsiveContainer>
       </div>
     </div>
@@ -61,17 +61,17 @@ export default function DashboardCharts({ stats }) {
   }));
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
       <ChartCard title="Incident Distribution">
         <PieChart>
           <Pie
             data={typeData}
             cx="50%"
             cy="50%"
-            innerRadius={60}
-            outerRadius={90}
+            innerRadius={70}
+            outerRadius={100}
             dataKey="value"
-            paddingAngle={5}
+            paddingAngle={8}
             stroke="none"
           >
             {typeData.map((_, i) => (
@@ -86,7 +86,7 @@ export default function DashboardCharts({ stats }) {
         <AreaChart data={hourData}>
           <defs>
             <linearGradient id="colorOpen" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor="#10b981" stopOpacity={0.2} />
+              <stop offset="5%" stopColor="#10b981" stopOpacity={0.15} />
               <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
             </linearGradient>
             <linearGradient id="colorFull" x1="0" y1="0" x2="0" y2="1">
@@ -94,32 +94,32 @@ export default function DashboardCharts({ stats }) {
               <stop offset="95%" stopColor="#f43f5e" stopOpacity={0} />
             </linearGradient>
           </defs>
-          <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.03)" vertical={false} />
-          <XAxis dataKey="hour" tick={{ fill: '#4b5563', fontSize: 10, fontWeight: 600 }} tickLine={false} axisLine={false} dy={10} />
-          <YAxis tick={{ fill: '#4b5563', fontSize: 10, fontWeight: 600 }} tickLine={false} axisLine={false} width={30} />
+          <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
+          <XAxis dataKey="hour" tick={{ fill: '#94a3b8', fontSize: 10, fontWeight: 700 }} tickLine={false} axisLine={false} dy={10} />
+          <YAxis tick={{ fill: '#94a3b8', fontSize: 10, fontWeight: 700 }} tickLine={false} axisLine={false} width={30} />
           <Tooltip {...tt} />
-          <Area type="monotone" dataKey="open" stroke="#10b981" fillOpacity={1} fill="url(#colorOpen)" strokeWidth={2.5} />
-          <Area type="monotone" dataKey="full" stroke="#f43f5e" fillOpacity={1} fill="url(#colorFull)" strokeWidth={2.5} />
+          <Area type="monotone" dataKey="open" stroke="#10b981" fillOpacity={1} fill="url(#colorOpen)" strokeWidth={3} />
+          <Area type="monotone" dataKey="full" stroke="#f43f5e" fillOpacity={1} fill="url(#colorFull)" strokeWidth={3} />
         </AreaChart>
       </ChartCard>
 
       <ChartCard title="High-Risk Hotspots" wide>
         <BarChart data={topData} layout="vertical" margin={{ left: 10 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.03)" horizontal={false} />
-          <XAxis type="number" tick={{ fill: '#4b5563', fontSize: 10, fontWeight: 600 }} tickLine={false} axisLine={false} />
-          <YAxis dataKey="name" type="category" width={100} tick={{ fill: '#9ca3af', fontSize: 10, fontWeight: 500 }} tickLine={false} axisLine={false} />
+          <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" horizontal={false} />
+          <XAxis type="number" tick={{ fill: '#94a3b8', fontSize: 10, fontWeight: 700 }} tickLine={false} axisLine={false} />
+          <YAxis dataKey="name" type="category" width={100} tick={{ fill: '#94a3b8', fontSize: 10, fontWeight: 600 }} tickLine={false} axisLine={false} />
           <Tooltip {...tt} />
-          <Bar dataKey="reports" fill="#f43f5e" radius={[0, 6, 6, 0]} barSize={20} />
+          <Bar dataKey="reports" fill="#f43f5e" radius={[0, 8, 8, 0]} barSize={24} />
         </BarChart>
       </ChartCard>
 
       <ChartCard title="Cycling Infrastructure Safety">
         <BarChart data={bikeData}>
-          <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.03)" vertical={false} />
-          <XAxis dataKey="range" tick={{ fill: '#4b5563', fontSize: 10, fontWeight: 600 }} tickLine={false} axisLine={false} dy={10} />
-          <YAxis tick={{ fill: '#4b5563', fontSize: 10, fontWeight: 600 }} tickLine={false} axisLine={false} width={24} />
+          <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
+          <XAxis dataKey="range" tick={{ fill: '#94a3b8', fontSize: 10, fontWeight: 700 }} tickLine={false} axisLine={false} dy={10} />
+          <YAxis tick={{ fill: '#94a3b8', fontSize: 10, fontWeight: 700 }} tickLine={false} axisLine={false} width={24} />
           <Tooltip {...tt} />
-          <Bar dataKey="segments" fill="#3b82f6" radius={[6, 6, 0, 0]} barSize={32} />
+          <Bar dataKey="segments" fill="#3b82f6" radius={[8, 8, 0, 0]} barSize={36} />
         </BarChart>
       </ChartCard>
     </div>

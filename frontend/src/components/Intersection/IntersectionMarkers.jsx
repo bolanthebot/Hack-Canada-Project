@@ -1,27 +1,73 @@
 import { Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
 
-function getRiskColor(count) {
-  if (count >= 5) return '#f87171';
-  if (count >= 2) return '#fbbf24';
-  return '#6ee7b7';
+const RISK_LEVELS = {
+  high: { color: '#f43f5e', label: 'High Risk' },
+  med: { color: '#f59e0b', label: 'Moderate Risk' },
+  low: { color: '#10b981', label: 'Low Risk' },
+};
+
+function getRiskLevel(count) {
+  if (count >= 5) return RISK_LEVELS.high;
+  if (count >= 2) return RISK_LEVELS.med;
+  return RISK_LEVELS.low;
 }
 
-function createIcon(color) {
+function createIcon(level) {
   return L.divIcon({
-    html: `<svg width="20" height="20" viewBox="0 0 20 20"><circle cx="10" cy="10" r="5" fill="${color}" opacity="0.9"/><circle cx="10" cy="10" r="8" fill="none" stroke="${color}" stroke-width="1.5" opacity="0.3"/></svg>`,
+    html: `
+      <div class="marker-pulse" style="
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        background: ${level.color};
+        border: 3px solid white;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      "></div>
+    `,
     className: '',
-    iconSize: [20, 20],
-    iconAnchor: [10, 10],
+    iconSize: [18, 18],
+    iconAnchor: [9, 9],
   });
 }
 
 const TYPE_LABELS = {
-  near_miss: 'Near miss',
-  cyclist_conflict: 'Cyclist conflict',
-  pedestrian_conflict: 'Pedestrian conflict',
-  aggressive_driver: 'Aggressive driving',
+  near_miss: 'Near Miss',
+  cyclist_conflict: 'Cyclist Conflict',
+  pedestrian_conflict: 'Pedestrian Conflict',
+  aggressive_driver: 'Aggressive Driving',
 };
+
+function IntersectionPopup({ count, avgSeverity, types, reportType, severity, description }) {
+  const isHighRisk = count >= 5 || severity >= 5;
+  return (
+    <div className="p-1 min-w-[180px]">
+      <div className="flex items-center gap-2 mb-2">
+        <div className={`w-2.5 h-2.5 rounded-full ${isHighRisk ? 'bg-rose-500 animate-pulse' : 'bg-amber-500'}`}></div>
+        <div className="text-[10px] font-black uppercase tracking-widest text-[#9ca3af]">
+          Safety Alert
+        </div>
+      </div>
+
+      <div className="text-sm font-bold text-[#1f2937] mb-1">
+        {count ? `${count} Incident Reports` : TYPE_LABELS[reportType]}
+      </div>
+
+      <div className="flex items-center gap-2 mb-2">
+        <span className="text-[10px] font-bold text-[#6b7280] uppercase">Severity</span>
+        <span className="text-[10px] font-black px-1.5 py-0.5 rounded bg-gray-100 text-[#4b5563]">
+          {(avgSeverity || severity || 0).toFixed(1)} / 5
+        </span>
+      </div>
+
+      {(types || description) && (
+        <div className="pt-2 border-t border-gray-100 text-[10px] text-[#9ca3af] italic leading-relaxed">
+          {types ? [...new Set(types)].map(t => TYPE_LABELS[t]).join(' • ') : `"${description}"`}
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function IntersectionMarkers({ reports, grouped }) {
   if (grouped && grouped.length > 0) {
@@ -29,18 +75,14 @@ export default function IntersectionMarkers({ reports, grouped }) {
       <Marker
         key={`g-${i}`}
         position={[g._id.lat, g._id.lng]}
-        icon={createIcon(getRiskColor(g.count))}
+        icon={createIcon(getRiskLevel(g.count))}
       >
         <Popup>
-          <div style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, lineHeight: 1.5 }}>
-            <div style={{ fontWeight: 600, marginBottom: 4 }}>{g.count} report{g.count !== 1 ? 's' : ''} here</div>
-            <div style={{ color: '#6b7280', fontSize: 12 }}>
-              Avg severity: {g.avgSeverity?.toFixed(1)}/5
-            </div>
-            <div style={{ color: '#6b7280', fontSize: 12, marginTop: 2 }}>
-              {[...new Set(g.types)].map((t) => TYPE_LABELS[t]).join(' / ')}
-            </div>
-          </div>
+          <IntersectionPopup
+            count={g.count}
+            avgSeverity={g.avgSeverity}
+            types={g.types}
+          />
         </Popup>
       </Marker>
     ));
@@ -50,18 +92,14 @@ export default function IntersectionMarkers({ reports, grouped }) {
     <Marker
       key={r._id}
       position={[r.location.coordinates[1], r.location.coordinates[0]]}
-      icon={createIcon(getRiskColor(r.severity))}
+      icon={createIcon(getRiskLevel(r.severity))}
     >
       <Popup>
-        <div style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, lineHeight: 1.5 }}>
-          <div style={{ fontWeight: 600, marginBottom: 2 }}>{TYPE_LABELS[r.reportType]}</div>
-          <div style={{ color: '#6b7280', fontSize: 12 }}>Severity: {r.severity}/5</div>
-          {r.description && (
-            <div style={{ color: '#9ca3af', fontSize: 12, marginTop: 4, fontStyle: 'italic' }}>
-              "{r.description}"
-            </div>
-          )}
-        </div>
+        <IntersectionPopup
+          reportType={r.reportType}
+          severity={r.severity}
+          description={r.description}
+        />
       </Popup>
     </Marker>
   ));

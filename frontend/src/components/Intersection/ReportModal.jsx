@@ -63,35 +63,35 @@ export default function ReportModal({ onReported }) {
   return (
     <div
       ref={modalRef}
-      className="absolute top-4 left-[340px] z-[1001] glass-panel rounded-2xl p-5 shadow-2xl w-80 border-white/10 animate-in zoom-in-95 duration-200"
+      className="absolute top-8 left-8 z-[1001] bg-white rounded-[2rem] p-8 shadow-2xl w-80 border border-gray-100 animate-in zoom-in-95 duration-200"
     >
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between mb-6">
         <div>
-          <h3 className="text-sm font-bold text-gray-100 tracking-tight">Report Incident</h3>
-          <div className="text-[10px] font-mono text-gray-500 mt-0.5">
+          <h3 className="text-sm font-black text-gray-800 uppercase tracking-widest leading-none">Report Incident</h3>
+          <div className="text-[10px] font-bold text-gray-400 mt-1 uppercase tracking-widest">
             {latlng?.lat.toFixed(5)}, {latlng?.lng.toFixed(5)}
           </div>
         </div>
         <button
           onClick={() => setOpen(false)}
-          className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-500 hover:text-gray-300 hover:bg-white/[0.04] transition-all"
+          className="w-10 h-10 rounded-xl flex items-center justify-center text-gray-400 hover:text-gray-600 hover:bg-gray-50 transition-all shadow-sm border border-gray-50"
         >
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M18 6L6 18" /><path d="M6 6l12 12" /></svg>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round"><path d="M18 6L6 18" /><path d="M6 6l12 12" /></svg>
         </button>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-6">
         <div>
-          <label className="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-2">Category</label>
-          <div className="grid grid-cols-2 gap-2">
+          <label className="block text-[10px] font-black text-gray-300 uppercase tracking-widest mb-3">Category</label>
+          <div className="grid grid-cols-1 gap-2">
             {REPORT_TYPES.map((t) => (
               <button
                 key={t.value}
                 type="button"
                 onClick={() => setReportType(t.value)}
-                className={`text-[11px] px-2.5 py-2 rounded-xl text-left transition-all border ${reportType === t.value
-                    ? 'bg-teal-500/20 border-teal-500/30 text-teal-400 font-bold shadow-sm'
-                    : 'bg-white/[0.02] border-transparent text-gray-500 hover:text-gray-300 hover:bg-white/[0.04]'
+                className={`text-[11px] px-4 py-3 rounded-xl text-left transition-all border font-bold ${reportType === t.value
+                  ? 'bg-blue-50 border-blue-200 text-blue-600 shadow-sm'
+                  : 'bg-gray-50 border-transparent text-gray-400 hover:text-gray-600 hover:bg-gray-100'
                   }`}
               >
                 {t.label}
@@ -101,24 +101,24 @@ export default function ReportModal({ onReported }) {
         </div>
 
         <div>
-          <div className="flex items-center justify-between mb-2">
-            <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Severity Level</label>
-            <span className={`text-[11px] font-black px-1.5 py-0.5 rounded shadow-sm ${severity >= 4 ? 'bg-rose-500/20 text-rose-400' :
-                severity >= 3 ? 'bg-amber-500/20 text-amber-400' :
-                  'bg-emerald-500/20 text-emerald-400'
+          <div className="flex items-center justify-between mb-3">
+            <label className="text-[10px] font-black text-gray-300 uppercase tracking-widest">Severity Level</label>
+            <span className={`text-[10px] font-black px-2 py-0.5 rounded uppercase tracking-widest ${severity >= 4 ? 'bg-rose-50 text-rose-600' :
+              severity >= 3 ? 'bg-amber-50 text-amber-600' :
+                'bg-emerald-50 text-emerald-600'
               }`}>{severity} / 5</span>
           </div>
-          <div className="flex gap-1.5 h-1.5">
+          <div className="flex gap-2 h-2">
             {[1, 2, 3, 4, 5].map((n) => (
               <button
                 key={n}
                 type="button"
                 onClick={() => setSeverity(n)}
                 className={`flex-1 rounded-full transition-all duration-300 ${n <= severity
-                    ? severity >= 4 ? 'bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.4)]' :
-                      severity >= 3 ? 'bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.4)]' :
-                        'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.4)]'
-                    : 'bg-white/[0.06]'
+                  ? severity >= 4 ? 'bg-rose-500 shadow-lg shadow-rose-200' :
+                    severity >= 3 ? 'bg-amber-500 shadow-lg shadow-amber-200' :
+                      'bg-emerald-500 shadow-lg shadow-emerald-200'
+                  : 'bg-gray-100'
                   }`}
               />
             ))}
@@ -126,27 +126,22 @@ export default function ReportModal({ onReported }) {
         </div>
 
         <div>
-          <label className="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-2">Detailed Notes</label>
+          <label className="block text-[10px] font-black text-gray-300 uppercase tracking-widest mb-3">Notes</label>
           <textarea
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            placeholder="Describe the incident..."
+            placeholder="What happened?..."
             rows={3}
-            className="input-base w-full resize-none leading-relaxed"
+            className="w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 text-sm text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/10 focus:border-blue-500 transition-all font-semibold resize-none"
           />
         </div>
 
         <button
           type="submit"
           disabled={submitting}
-          className="btn-primary w-full h-11"
+          className="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-40 text-white text-xs font-black uppercase tracking-widest py-4 rounded-xl shadow-lg shadow-blue-500/25 transition-all mt-2 active:scale-95"
         >
-          {submitting ? (
-            <div className="flex items-center justify-center gap-2">
-              <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
-              <span>Saving...</span>
-            </div>
-          ) : 'Submit Incident Report'}
+          {submitting ? 'Saving...' : 'Submit Report'}
         </button>
       </form>
     </div>
