@@ -5,7 +5,8 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "seed": "node seed.js"
+    "seed": "node seed.js",
+    "import-bike": "node import_geojson.js"
   },
   "dependencies": {
     "cors": "^2.8.5",
