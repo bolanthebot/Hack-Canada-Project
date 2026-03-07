@@ -5,6 +5,7 @@ const Intersection = require('../models/Intersection');
 router.get('/', async (req, res) => {
   try {
     const reports = await Intersection.find().sort({ createdAt: -1 });
+    // const reports = await Intersection.find().sort({ createdAt: -1 }).limit(100)
     res.json(reports);
   } catch (err) {
     res.status(500).json({ error: err.message });

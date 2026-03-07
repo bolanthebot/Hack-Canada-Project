@@ -32,7 +32,8 @@ pip install -r requirements.txt
 ### 3. Seed the database
 
 ```bash
-npm run seed
+cd backend 
+npm run import_geojson.js
 ```
 
 ### 4. Start all services

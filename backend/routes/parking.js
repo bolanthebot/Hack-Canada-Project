@@ -5,6 +5,7 @@ const Parking = require('../models/Parking');
 router.get('/', async (req, res) => {
   try {
     const spots = await Parking.find().sort({ updatedAt: -1 });
+    // const spots = await Parking.find().sort({ updatedAt: -1 }).limit(100)
     res.json(spots);
   } catch (err) {
     res.status(500).json({ error: err.message });
