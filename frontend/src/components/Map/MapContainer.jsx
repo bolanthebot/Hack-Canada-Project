@@ -1,4 +1,4 @@
-import { MapContainer as LeafletMap, TileLayer, ZoomControl, useMap, CircleMarker } from 'react-leaflet';
+import { MapContainer as LeafletMap, TileLayer, ZoomControl, useMap, useMapEvents, CircleMarker } from 'react-leaflet';
 import { useEffect } from 'react';
 import 'leaflet/dist/leaflet.css';
 
@@ -12,7 +12,16 @@ function FlyToCenter({ center }) {
   return null;
 }
 
-export default function MapContainer({ children, center, userLocation, className = '' }) {
+function ClickHandler({ onMapClick }) {
+  useMapEvents({
+    click(e) {
+      onMapClick?.({ lat: e.latlng.lat, lng: e.latlng.lng });
+    },
+  });
+  return null;
+}
+
+export default function MapContainer({ children, center, userLocation, onMapClick, className = '' }) {
   return (
     <LeafletMap
       center={center || DEFAULT_CENTER}
@@ -28,6 +37,7 @@ export default function MapContainer({ children, center, userLocation, className
       />
 
       {center && <FlyToCenter center={center} />}
+      {onMapClick && <ClickHandler onMapClick={onMapClick} />}
 
       {userLocation && (
         <CircleMarker

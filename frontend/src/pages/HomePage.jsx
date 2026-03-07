@@ -21,6 +21,7 @@ export default function HomePage() {
   const [bikeMinScore, setBikeMinScore] = useState(0);
   const [route, setRoute] = useState(null);
   const [userLocation, setUserLocation] = useState(null);
+  const [clickedDest, setClickedDest] = useState(null);
 
   useEffect(() => {
     if (!navigator.geolocation) return;
@@ -68,7 +69,7 @@ export default function HomePage() {
 
   return (
     <div className="relative w-full h-screen">
-      <MapContainer center={userLocation} userLocation={userLocation}>
+      <MapContainer center={userLocation} userLocation={userLocation} onMapClick={setClickedDest}>
         <ReportModal onReported={loadIntersections} />
 
         {activeLayers.includes('intersections') && (
@@ -92,6 +93,7 @@ export default function HomePage() {
 
       <RouteSearchPanel
         userLocation={userLocation}
+        clickedDest={clickedDest}
         onRouteFound={setRoute}
         onRouteClear={() => setRoute(null)}
       />

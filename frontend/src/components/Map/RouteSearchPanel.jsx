@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { routeApi } from '../../api';
 import toast from 'react-hot-toast';
 
@@ -11,13 +11,23 @@ const MODES = [
 const inputCls =
   'w-full bg-white/[0.06] border border-white/[0.08] rounded px-2.5 py-1.5 text-[12px] text-gray-200 focus:outline-none focus:border-teal-500/50 placeholder:text-gray-600';
 
-export default function RouteSearchPanel({ userLocation, onRouteFound, onRouteClear }) {
+export default function RouteSearchPanel({ userLocation, clickedDest, onRouteFound, onRouteClear }) {
   const [origin, setOrigin] = useState('');
   const [destination, setDestination] = useState('');
   const [travelMode, setTravelMode] = useState('DRIVE');
   const [useMyLocation, setUseMyLocation] = useState(false);
+  const [destCoords, setDestCoords] = useState(null);
   const [route, setRoute] = useState(null);
   const [loading, setLoading] = useState(false);
+  const prevClickRef = useRef(null);
+
+  useEffect(() => {
+    if (!clickedDest || clickedDest === prevClickRef.current) return;
+    prevClickRef.current = clickedDest;
+    const label = `${clickedDest.lat.toFixed(5)}, ${clickedDest.lng.toFixed(5)}`;
+    setDestination(label);
+    setDestCoords(clickedDest);
+  }, [clickedDest]);
 
   const handleUseMyLocation = () => {
     if (!userLocation) {
@@ -33,6 +43,11 @@ export default function RouteSearchPanel({ userLocation, onRouteFound, onRouteCl
     setUseMyLocation(false);
   };
 
+  const handleDestChange = (e) => {
+    setDestination(e.target.value);
+    setDestCoords(null);
+  };
+
   const handleSearch = async () => {
     if ((!origin.trim() && !useMyLocation) || !destination.trim()) {
       toast.error('Enter origin and destination');
@@ -44,9 +59,11 @@ export default function RouteSearchPanel({ userLocation, onRouteFound, onRouteCl
         ? { lat: userLocation[0], lng: userLocation[1] }
         : origin.trim();
 
+      const destPayload = destCoords || destination.trim();
+
       const res = await routeApi.navigate({
         origin: originPayload,
-        destination: destination.trim(),
+        destination: destPayload,
         travelMode,
       });
       setRoute(res.data);
@@ -104,9 +121,9 @@ export default function RouteSearchPanel({ userLocation, onRouteFound, onRouteCl
         </div>
         <input
           value={destination}
-          onChange={(e) => setDestination(e.target.value)}
+          onChange={handleDestChange}
           onKeyDown={handleKeyDown}
-          placeholder="Destination"
+          placeholder="Destination — or click on map"
           className={inputCls}
         />
       </div>
