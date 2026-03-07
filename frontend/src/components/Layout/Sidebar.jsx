@@ -1,4 +1,5 @@
 import { NavLink } from 'react-router-dom';
+import { useAuth0 } from '@auth0/auth0-react';
 
 const MapIcon = () => (
   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
@@ -27,6 +28,20 @@ const navItems = [
 ];
 
 export default function Sidebar({ collapsed, onToggle }) {
+  const {
+    isAuthenticated,
+    isLoading,
+    user,
+    loginWithRedirect: login,
+    logout: auth0Logout,
+  } = useAuth0();
+
+  const signup = () =>
+    login({ authorizationParams: { screen_hint: 'signup' } });
+
+  const logout = () =>
+    auth0Logout({ logoutParams: { returnTo: window.location.origin } });
+
   return (
     <aside
       className={`fixed top-0 left-0 h-full bg-[#10131a] z-50 flex flex-col transition-all duration-200 ${
@@ -66,6 +81,41 @@ export default function Sidebar({ collapsed, onToggle }) {
           </NavLink>
         ))}
       </nav>
+
+      <div className="px-2 pb-2 space-y-1.5">
+        {isLoading ? (
+          <div className="text-[12px] text-gray-500 px-2">Checking auth...</div>
+        ) : isAuthenticated ? (
+          <>
+            {!collapsed && (
+              <div className="px-2 text-[12px] text-gray-400 truncate">
+                {user?.email || user?.name}
+              </div>
+            )}
+            <button
+              onClick={logout}
+              className="w-full py-1.5 rounded-md text-[12px] text-gray-300 bg-white/[0.06] hover:bg-white/[0.1] transition-colors"
+            >
+              Logout
+            </button>
+          </>
+        ) : (
+          <>
+            <button
+              onClick={signup}
+              className="w-full py-1.5 rounded-md text-[12px] text-gray-200 bg-teal-600 hover:bg-teal-500 transition-colors"
+            >
+              Signup
+            </button>
+            <button
+              onClick={() => login()}
+              className="w-full py-1.5 rounded-md text-[12px] text-gray-300 bg-white/[0.06] hover:bg-white/[0.1] transition-colors"
+            >
+              Login
+            </button>
+          </>
+        )}
+      </div>
 
       <div className="px-2 pb-3">
         <button
