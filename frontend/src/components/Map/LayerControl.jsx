@@ -1,6 +1,7 @@
 const layers = [
   { id: 'intersections', label: 'Danger zones', dot: '#f87171' },
   { id: 'greenp', label: 'Green P Parking', dot: '#22C55E' },
+  { id: 'street_parking', label: 'Street Parking', dot: '#3b82f6' },
   { id: 'bike', label: 'Bike routes', dot: '#34d399' },
   { id: 'heatmap', label: 'Risk heatmap', dot: '#fb923c' },
 ];

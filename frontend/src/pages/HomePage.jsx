@@ -12,7 +12,7 @@ import RouteLayer from '../components/Map/RouteLayer';
 import { intersectionApi, parkingApi, bikeApi } from '../api';
 
 export default function HomePage() {
-  const [activeLayers, setActiveLayers] = useState(['intersections', 'greenp', 'bike']);
+  const [activeLayers, setActiveLayers] = useState(['intersections', 'greenp', 'street_parking', 'bike']);
   const [intersections, setIntersections] = useState([]);
   const [hotspots, setHotspots] = useState([]);
   const [parkingSpots, setParkingSpots] = useState([]);
@@ -82,6 +82,13 @@ export default function HomePage() {
         {activeLayers.includes('greenp') && (
           <ParkingMarkers 
              spots={parkingSpots.filter(spot => spot.source === 'green_p')} 
+             onUpdate={loadParking} 
+          />
+        )}
+
+        {activeLayers.includes('street_parking') && (
+          <ParkingMarkers 
+             spots={parkingSpots.filter(spot => spot.source === 'user_reported')} 
              onUpdate={loadParking} 
           />
         )}
