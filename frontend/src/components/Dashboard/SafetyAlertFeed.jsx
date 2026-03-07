@@ -1,4 +1,4 @@
-import { formatDistanceToNow } from 'axios'; // Actually I'll just use a simple formatter to avoid dependency issues if axios isn't meant for that
+// Safety Alert Feed component
 
 const TYPE_LABELS = {
     near_miss: 'Near Miss',
@@ -43,7 +43,7 @@ export default function SafetyAlertFeed({ reports = [] }) {
                                     Lvl {Math.round(report.severity)}
                                 </span>
                                 <span className="text-[9px] font-bold text-gray-300">
-                                    {new Date(report.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                    {report.createdAt ? new Date(report.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Pending'}
                                 </span>
                             </div>
                             <div className="text-[11px] font-black text-gray-800 mb-1 leading-tight">
