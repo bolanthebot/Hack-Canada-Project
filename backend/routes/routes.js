@@ -1,22 +1,84 @@
 const router = require('express').Router();
 
-// Haversine distance in km
-function haversine([lng1, lat1], [lng2, lat2]) {
-  const R = 6371;
-  const toRad = (d) => (d * Math.PI) / 180;
-  const dLat = toRad(lat2 - lat1);
-  const dLng = toRad(lng2 - lng1);
-  const a =
-    Math.sin(dLat / 2) ** 2 +
-    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2;
-  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+const ROUTES_API = 'https://routes.googleapis.com/directions/v2:computeRoutes';
+const GAS_PRICES = { regular: 1.65, premium: 1.85, diesel: 1.72 };
+const FIELD_MASK = [
+  'routes.duration',
+  'routes.distanceMeters',
+  'routes.description',
+  'routes.polyline.encodedPolyline',
+].join(',');
+
+function buildWaypoint(input) {
+  if (typeof input === 'string') {
+    return { address: input };
+  }
+  if (Array.isArray(input) && input.length === 2) {
+    return {
+      location: {
+        latLng: { latitude: input[1], longitude: input[0] },
+      },
+    };
+  }
+  if (input && input.lat != null && input.lng != null) {
+    return {
+      location: {
+        latLng: { latitude: input.lat, longitude: input.lng },
+      },
+    };
+  }
+  throw new Error('Invalid waypoint format — provide an address string, [lng, lat] array, or { lat, lng } object');
 }
 
-// Simulated gas prices per litre (CAD)
-const GAS_PRICES = { regular: 1.65, premium: 1.85, diesel: 1.72 };
+async function fetchRoute(origin, destination, routeModifiers = {}) {
+  const apiKey = process.env.GOOGLE_MAPS_API_KEY;
+  if (!apiKey || apiKey === 'YOUR_GOOGLE_MAPS_API_KEY_HERE') {
+    throw new Error('GOOGLE_MAPS_API_KEY is not configured in .env');
+  }
+
+  const response = await fetch(ROUTES_API, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Goog-Api-Key': apiKey,
+      'X-Goog-FieldMask': FIELD_MASK,
+    },
+    body: JSON.stringify({
+      origin: buildWaypoint(origin),
+      destination: buildWaypoint(destination),
+      travelMode: 'DRIVE',
+      routingPreference: 'TRAFFIC_AWARE_OPTIMAL',
+      routeModifiers,
+      languageCode: 'en-US',
+      units: 'METRIC',
+    }),
+  });
+
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error(err.error?.message || `Routes API returned ${response.status}`);
+  }
+
+  const data = await response.json();
+  if (!data.routes || data.routes.length === 0) {
+    throw new Error('No routes found between the given locations');
+  }
+  return data.routes[0];
+}
+
+function parseRoute(raw) {
+  const distanceKm = raw.distanceMeters / 1000;
+  const durationSec = parseInt(raw.duration.replace('s', ''), 10);
+  return {
+    distance: Math.round(distanceKm * 10) / 10,
+    duration: Math.round(durationSec / 60),
+    description: raw.description || '',
+    polyline: raw.polyline?.encodedPolyline || '',
+  };
+}
 
 // POST /api/routes/plan
-router.post('/plan', (req, res) => {
+router.post('/plan', async (req, res) => {
   try {
     const { origin, destination, fuelType = 'regular', fuelEfficiency = 10 } = req.body;
 
@@ -24,50 +86,33 @@ router.post('/plan', (req, res) => {
       return res.status(400).json({ error: 'origin and destination are required' });
     }
 
-    const straightDist = haversine(origin, destination);
     const gasPrice = GAS_PRICES[fuelType] || GAS_PRICES.regular;
 
-    // Generate three route variants
+    const [fastestRaw, cheapestRaw, safestRaw] = await Promise.all([
+      fetchRoute(origin, destination, {}),
+      fetchRoute(origin, destination, { avoidTolls: true }),
+      fetchRoute(origin, destination, { avoidHighways: true }),
+    ]);
+
+    const RISK_FACTOR = { fastest: 0.05, cheapest: 0.04, safest: 0.02 };
+
     const routes = [
-      {
-        routeType: 'fastest',
-        distanceMultiplier: 1.15,   // fairly direct
-        speedKmh: 55,
-        riskMultiplier: 1.0,
-      },
-      {
-        routeType: 'cheapest',
-        distanceMultiplier: 1.3,    // longer but avoids tolls / highway
-        speedKmh: 40,
-        riskMultiplier: 0.8,
-      },
-      {
-        routeType: 'safest',
-        distanceMultiplier: 1.4,    // avoids danger zones
-        speedKmh: 35,
-        riskMultiplier: 0.3,
-      },
-    ].map((r) => {
-      const distance = Math.round(straightDist * r.distanceMultiplier * 10) / 10;
-      const duration = Math.round((distance / r.speedKmh) * 60);           // minutes
+      { routeType: 'fastest', raw: fastestRaw },
+      { routeType: 'cheapest', raw: cheapestRaw },
+      { routeType: 'safest', raw: safestRaw },
+    ].map(({ routeType, raw }) => {
+      const { distance, duration, description, polyline } = parseRoute(raw);
       const fuelCost = Math.round(((distance / fuelEfficiency) * gasPrice) * 100) / 100;
-      const timeCost = Math.round((duration * 0.35) * 100) / 100;          // $0.35/min value of time
-      const riskCost = Math.round((distance * 0.05 * r.riskMultiplier) * 100) / 100;
+      const timeCost = Math.round((duration * 0.35) * 100) / 100;
+      const riskCost = Math.round((distance * RISK_FACTOR[routeType]) * 100) / 100;
       const totalCost = Math.round((fuelCost + timeCost + riskCost) * 100) / 100;
 
-      return {
-        routeType: r.routeType,
-        distance,
-        duration,
-        fuelCost,
-        timeCost,
-        riskCost,
-        totalCost,
-      };
+      return { routeType, distance, duration, fuelCost, timeCost, riskCost, totalCost, description, polyline };
     });
 
     res.json({ gasPrice, routes });
   } catch (err) {
+    console.error('Route planning error:', err.message);
     res.status(500).json({ error: err.message });
   }
 });

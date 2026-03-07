@@ -3,9 +3,9 @@ import {
 } from 'recharts';
 
 const ROUTE_META = {
-  fastest: { label: 'Fastest', color: '#60a5fa', desc: 'Shortest travel time' },
-  cheapest: { label: 'Cheapest', color: '#34d399', desc: 'Lowest fuel spend' },
-  safest: { label: 'Safest', color: '#c084fc', desc: 'Avoids risk zones' },
+  fastest: { label: 'Fastest', color: '#60a5fa', fallbackDesc: 'Shortest travel time' },
+  cheapest: { label: 'Cheapest', color: '#34d399', fallbackDesc: 'Avoids tolls' },
+  safest: { label: 'Safest', color: '#c084fc', fallbackDesc: 'Avoids highways' },
 };
 
 const tt = {
@@ -20,7 +20,7 @@ const tt = {
   },
 };
 
-export default function RouteResults({ result }) {
+export default function RouteResults({ result, activeRoute, onRouteHover }) {
   const { gasPrice, routes } = result;
 
   const chartData = routes.map((r) => ({
@@ -56,13 +56,21 @@ export default function RouteResults({ result }) {
       <div className="grid grid-cols-3 gap-px bg-white/[0.04] rounded-lg overflow-hidden">
         {routes.map((route) => {
           const meta = ROUTE_META[route.routeType];
+          const isActive = activeRoute === route.routeType;
           return (
-            <div key={route.routeType} className="bg-[#0c0f14] p-5">
+            <div
+              key={route.routeType}
+              className={`bg-[#0c0f14] p-5 cursor-pointer transition-colors ${isActive ? 'ring-1 ring-inset' : 'hover:bg-[#0f1219]'}`}
+              style={isActive ? { ringColor: meta.color, boxShadow: `inset 0 0 0 1px ${meta.color}40` } : {}}
+              onMouseEnter={() => onRouteHover?.(route.routeType)}
+            >
               <div className="flex items-center gap-2 mb-1">
                 <span className="w-2 h-2 rounded-full" style={{ background: meta.color }} />
                 <span className="text-[13px] font-medium text-gray-200">{meta.label}</span>
               </div>
-              <div className="text-[11px] text-gray-600 mb-4">{meta.desc}</div>
+              <div className="text-[11px] text-gray-600 mb-4">
+                {route.description || meta.fallbackDesc}
+              </div>
 
               <div className="text-2xl font-semibold text-gray-100 tabular-nums mb-4">
                 ${route.totalCost.toFixed(2)}

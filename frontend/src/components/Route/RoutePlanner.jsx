@@ -2,11 +2,12 @@ import { useState } from 'react';
 import { routeApi } from '../../api';
 import toast from 'react-hot-toast';
 import RouteResults from './RouteResults';
+import RouteMap from './RouteMap';
 
 const PRESETS = [
-  { label: 'Mississauga to Downtown', origin: [-79.6441, 43.5890], destination: [-79.3832, 43.6532] },
-  { label: 'Scarborough to Downtown', origin: [-79.2318, 43.7731], destination: [-79.3832, 43.6532] },
-  { label: 'North York to Downtown', origin: [-79.4149, 43.7615], destination: [-79.3832, 43.6532] },
+  { label: 'Mississauga to Downtown Toronto', origin: 'Mississauga, ON', destination: 'Downtown Toronto, ON' },
+  { label: 'Scarborough to Downtown Toronto', origin: 'Scarborough, ON', destination: 'Downtown Toronto, ON' },
+  { label: 'North York to Downtown Toronto', origin: 'North York, ON', destination: 'Downtown Toronto, ON' },
 ];
 
 function Field({ label, children }) {
@@ -21,36 +22,36 @@ function Field({ label, children }) {
 const inputCls = "w-full bg-white/[0.03] border border-white/[0.06] rounded px-2.5 py-2 text-[13px] text-gray-200 focus:outline-none focus:border-teal-500/40 font-mono";
 
 export default function RoutePlanner() {
-  const [originLng, setOriginLng] = useState('-79.6441');
-  const [originLat, setOriginLat] = useState('43.5890');
-  const [destLng, setDestLng] = useState('-79.3832');
-  const [destLat, setDestLat] = useState('43.6532');
+  const [origin, setOrigin] = useState('');
+  const [destination, setDestination] = useState('');
   const [fuelType, setFuelType] = useState('regular');
   const [fuelEfficiency, setFuelEfficiency] = useState('10');
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [activeRoute, setActiveRoute] = useState('fastest');
 
   const applyPreset = (preset) => {
-    setOriginLng(String(preset.origin[0]));
-    setOriginLat(String(preset.origin[1]));
-    setDestLng(String(preset.destination[0]));
-    setDestLat(String(preset.destination[1]));
+    setOrigin(preset.origin);
+    setDestination(preset.destination);
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!origin.trim() || !destination.trim()) {
+      toast.error('Enter both origin and destination');
+      return;
+    }
     setLoading(true);
     try {
-      // NOTE: Route backend has been deleted.
       const res = await routeApi.plan({
-        origin: [parseFloat(originLng), parseFloat(originLat)],
-        destination: [parseFloat(destLng), parseFloat(destLat)],
+        origin: origin.trim(),
+        destination: destination.trim(),
         fuelType,
         fuelEfficiency: parseFloat(fuelEfficiency),
       });
       setResult(res.data);
-    } catch {
-      toast.error('Could not calculate routes');
+    } catch (err) {
+      toast.error(err.response?.data?.error || 'Could not calculate routes');
     } finally {
       setLoading(false);
     }
@@ -62,7 +63,7 @@ export default function RoutePlanner() {
         <div className="mb-8">
           <h1 className="text-xl font-semibold text-gray-100 mb-1">Route planner</h1>
           <p className="text-sm text-gray-500">
-            Compare routes optimized for speed, cost, or safety
+            Compare routes optimized for speed, cost, or safety — powered by Google Maps
           </p>
         </div>
 
@@ -89,23 +90,23 @@ export default function RoutePlanner() {
               <div className="h-px bg-white/[0.04] mb-5" />
 
               <form onSubmit={handleSubmit} className="space-y-3">
-                <div className="grid grid-cols-2 gap-2">
-                  <Field label="Origin lat">
-                    <input value={originLat} onChange={(e) => setOriginLat(e.target.value)} className={inputCls} />
-                  </Field>
-                  <Field label="Origin lng">
-                    <input value={originLng} onChange={(e) => setOriginLng(e.target.value)} className={inputCls} />
-                  </Field>
-                </div>
+                <Field label="Origin">
+                  <input
+                    value={origin}
+                    onChange={(e) => setOrigin(e.target.value)}
+                    placeholder="e.g. Mississauga, ON"
+                    className={inputCls}
+                  />
+                </Field>
 
-                <div className="grid grid-cols-2 gap-2">
-                  <Field label="Destination lat">
-                    <input value={destLat} onChange={(e) => setDestLat(e.target.value)} className={inputCls} />
-                  </Field>
-                  <Field label="Destination lng">
-                    <input value={destLng} onChange={(e) => setDestLng(e.target.value)} className={inputCls} />
-                  </Field>
-                </div>
+                <Field label="Destination">
+                  <input
+                    value={destination}
+                    onChange={(e) => setDestination(e.target.value)}
+                    placeholder="e.g. Downtown Toronto, ON"
+                    className={inputCls}
+                  />
+                </Field>
 
                 <Field label="Fuel type">
                   <select value={fuelType} onChange={(e) => setFuelType(e.target.value)} className={inputCls}>
@@ -130,14 +131,23 @@ export default function RoutePlanner() {
             </div>
           </div>
 
-          <div className="lg:col-span-8">
+          <div className="lg:col-span-8 space-y-4">
+            <RouteMap
+              routes={result?.routes || []}
+              activeRoute={activeRoute}
+            />
+
             {result ? (
-              <RouteResults result={result} />
+              <RouteResults
+                result={result}
+                activeRoute={activeRoute}
+                onRouteHover={setActiveRoute}
+              />
             ) : (
-              <div className="bg-[#12151c] rounded-lg h-full min-h-[400px] flex items-center justify-center">
+              <div className="bg-[#12151c] rounded-lg h-40 flex items-center justify-center">
                 <div className="text-center">
                   <div className="text-gray-600 text-sm mb-1">No routes calculated yet</div>
-                  <div className="text-gray-700 text-xs">Pick a common route or enter coordinates</div>
+                  <div className="text-gray-700 text-xs">Pick a common route or enter an address</div>
                 </div>
               </div>
             )}
