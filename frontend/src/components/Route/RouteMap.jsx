@@ -14,9 +14,9 @@ import 'leaflet/dist/leaflet.css';
 import { decodePolyline } from '../../utils/polyline';
 
 const ROUTE_COLORS = {
-  fastest: '#60a5fa',
-  cheapest: '#34d399',
-  safest: '#c084fc',
+  fastest: '#2563eb', // Blue
+  cheapest: '#059669', // Emerald
+  safest: '#7c3aed', // Purple
 };
 
 function circleIcon(color) {
@@ -25,7 +25,7 @@ function circleIcon(color) {
     html: `<div style="
       width:16px;height:16px;border-radius:50%;
       background:${color};border:2.5px solid rgba(255,255,255,0.9);
-      box-shadow:0 2px 8px rgba(0,0,0,0.6),0 0 0 4px ${color}33;
+      box-shadow:0 2px 8px rgba(0,0,0,0.3),0 0 0 4px ${color}33;
     "></div>`,
     iconSize: [16, 16],
     iconAnchor: [8, 8],
@@ -38,17 +38,17 @@ function stopIcon(stopNumber) {
     html: `
       <div style="
         width:32px;height:32px;border-radius:50%;
-        background:#0d1017;border:2px solid #14b8a6;
-        box-shadow:0 2px 12px rgba(0,0,0,0.7),0 0 16px rgba(20,184,166,0.3);
+        background:#1e293b;border:2px solid #3b82f6;
+        box-shadow:0 4px 12px rgba(59,130,246,0.3);
         display:flex;align-items:center;justify-content:center;
-        font-size:13px;font-weight:700;color:#14b8a6;font-family:monospace;
+        font-size:13px;font-weight:900;color:white;font-family:Inter,sans-serif;
       ">${stopNumber}</div>`,
     iconSize: [32, 32],
     iconAnchor: [16, 16],
   });
 }
 
-function FitBounds({ decoded, gasStops }) {
+function FitBounds({ decoded }) {
   const map = useMap();
   useEffect(() => {
     const allPts = decoded.flatMap((r) => r.points);
@@ -68,26 +68,24 @@ export default function RouteMap({ routes = [], activeRoute, gasStops = null, ga
 
   const origin = decoded.length > 0 ? decoded[0].points[0] : null;
   const dest = decoded.length > 0 ? decoded[0].points[decoded[0].points.length - 1] : null;
-
-  // Extract planned stops from the new data shape
   const plannedStops = gasStops?.plannedStops || [];
 
   return (
-    <div className="relative rounded-xl overflow-hidden border border-white/[0.05]" style={{ height: 400 }}>
+    <div className="bg-white rounded-[2.5rem] overflow-hidden relative border border-gray-100 shadow-xl group" style={{ height: 480 }}>
       <LeafletMap
         center={[43.6532, -79.3832]}
         zoom={11}
         zoomControl={false}
         className="w-full h-full"
-        style={{ height: '100%', background: '#080a0f' }}
+        style={{ height: '100%', background: '#f8f9fa' }}
       >
         <ZoomControl position="bottomright" />
         <TileLayer
           attribution='&copy; <a href="https://carto.com/">CARTO</a>'
-          url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+          url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager_labels_under/{z}/{x}/{y}{r}.png"
         />
 
-        {decoded.length > 0 && <FitBounds decoded={decoded} gasStops={gasStops} />}
+        {decoded.length > 0 && <FitBounds decoded={decoded} />}
 
         {/* Inactive routes */}
         {decoded
@@ -96,37 +94,49 @@ export default function RouteMap({ routes = [], activeRoute, gasStops = null, ga
             <Polyline
               key={r.routeType}
               positions={r.points}
-              pathOptions={{ color: ROUTE_COLORS[r.routeType] || '#888', weight: 3, opacity: 0.2 }}
+              pathOptions={{
+                color: ROUTE_COLORS[r.routeType] || '#888',
+                weight: 4,
+                opacity: 0.1,
+              }}
             />
           ))}
 
-        {/* Active route — glow */}
+        {/* Active route — with glow */}
         {decoded
           .filter((r) => r.routeType === activeRoute)
           .map((r) => (
-            <>
+            <div key={`${r.routeType}-container`}>
               <Polyline
-                key={`${r.routeType}-glow`}
                 positions={r.points}
-                pathOptions={{ color: ROUTE_COLORS[r.routeType] || '#888', weight: 10, opacity: 0.15 }}
+                pathOptions={{
+                  color: ROUTE_COLORS[r.routeType] || '#888',
+                  weight: 12,
+                  opacity: 0.1,
+                }}
               />
               <Polyline
-                key={`${r.routeType}-active`}
                 positions={r.points}
-                pathOptions={{ color: ROUTE_COLORS[r.routeType] || '#888', weight: 4, opacity: 1 }}
+                pathOptions={{
+                  color: ROUTE_COLORS[r.routeType] || '#888',
+                  weight: 6,
+                  opacity: 1,
+                  lineCap: 'round',
+                  lineJoin: 'round',
+                }}
               />
-            </>
+            </div>
           ))}
 
-        {/* Origin / destination */}
+        {/* Markers */}
         {origin && (
-          <Marker position={origin} icon={circleIcon('#22c55e')}>
-            <Popup>Origin</Popup>
+          <Marker position={origin} icon={circleIcon('#3b82f6')}>
+            <Popup><span className="font-black uppercase text-[10px] tracking-widest text-blue-600">Origin Point</span></Popup>
           </Marker>
         )}
         {dest && (
-          <Marker position={dest} icon={circleIcon('#ef4444')}>
-            <Popup>Destination</Popup>
+          <Marker position={dest} icon={circleIcon('#10b981')}>
+            <Popup><span className="font-black uppercase text-[10px] tracking-widest text-emerald-600">Destination Point</span></Popup>
           </Marker>
         )}
 
@@ -137,83 +147,80 @@ export default function RouteMap({ routes = [], activeRoute, gasStops = null, ga
             position={[stop.lat, stop.lng]}
             icon={stopIcon(stop.stopNumber)}
           >
-            <Tooltip direction="top" offset={[0, -18]} opacity={1}>
-              <div style={{
-                background: '#0d1017',
-                border: '1px solid rgba(20,184,166,0.3)',
-                borderRadius: 8,
-                padding: '5px 10px',
-                fontSize: 12,
-                fontFamily: 'monospace',
-                color: '#e5e7eb',
-                whiteSpace: 'nowrap',
-              }}>
-                {stop.recommendedStation
-                  ? `${stop.recommendedStation.name} · ${stop.recommendedStation.estimatedPriceCentsPerL}¢/L`
-                  : `Stop ${stop.stopNumber}`
-                }
+            <Tooltip direction="top" offset={[0, -20]} opacity={1} permanent={false}>
+              <div className="bg-gray-900 text-white px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest border border-blue-500/30 shadow-xl">
+                {stop.recommendedStation ? stop.recommendedStation.name : `Stop ${stop.stopNumber}`}
               </div>
             </Tooltip>
             <Popup>
-              <div style={{ minWidth: 180, fontFamily: 'monospace' }}>
-                <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 6 }}>
-                  Stop {stop.stopNumber} · {stop.distFromStartKm} km
+              <div className="p-1 min-w-[200px]">
+                <div className="text-[10px] font-black text-blue-600 uppercase tracking-widest mb-2 border-b border-gray-100 pb-2">
+                  Optimization Stop {stop.stopNumber}
                 </div>
-                <div style={{ fontSize: 11, color: '#9ca3af', marginBottom: 8 }}>
-                  Fuel on arrival: {stop.fuelPercentOnArrival}%
-                </div>
-                {stop.recommendedStation && (
-                  <>
-                    <div style={{ fontSize: 12, color: '#34d399', fontWeight: 700 }}>
-                      ★ {stop.recommendedStation.name}
-                    </div>
-                    <div style={{ fontSize: 13, color: '#34d399', fontWeight: 700, marginTop: 2 }}>
-                      {stop.recommendedStation.estimatedPriceCentsPerL}¢/L
-                    </div>
-                    {stop.recommendedStation.address && (
-                      <div style={{ fontSize: 11, color: '#6b7280', marginTop: 2 }}>
-                        {stop.recommendedStation.address}
+                <div className="space-y-2">
+                  <div className="flex justify-between items-end">
+                    <span className="text-[11px] font-bold text-gray-400 uppercase">Distance</span>
+                    <span className="text-sm font-black text-gray-800">{stop.distFromStartKm.toFixed(1)} km</span>
+                  </div>
+                  <div className="flex justify-between items-end">
+                    <span className="text-[11px] font-bold text-gray-400 uppercase">Fuel State</span>
+                    <span className={`text-sm font-black ${stop.fuelPercentOnArrival < 20 ? 'text-rose-500' : 'text-amber-500'}`}>
+                      {stop.fuelPercentOnArrival}%
+                    </span>
+                  </div>
+                  {stop.recommendedStation && (
+                    <div className="mt-4 pt-4 border-t border-gray-50">
+                      <div className="text-[10px] font-black text-emerald-600 uppercase tracking-widest mb-1 flex items-center gap-1">
+                        <span className="text-sm">★</span> Best Value Station
                       </div>
-                    )}
-                    <div style={{ fontSize: 11, color: '#6b7280', marginTop: 2 }}>
-                      +{stop.recommendedStation.detourKm} km detour
+                      <div className="text-sm font-black text-gray-800 leading-tight">
+                        {stop.recommendedStation.name}
+                      </div>
+                      <div className="text-xl font-black text-emerald-600 mt-1">
+                        ${(stop.recommendedStation.estimatedPriceCentsPerL / 100).toFixed(2)}<span className="text-[10px] ml-1 text-gray-400">/L</span>
+                      </div>
+                      <div className="text-[10px] font-bold text-gray-400 mt-2 italic">
+                        +{stop.recommendedStation.detourKm}km detour from optimal path
+                      </div>
                     </div>
-                  </>
-                )}
+                  )}
+                </div>
               </div>
             </Popup>
           </Marker>
         ))}
       </LeafletMap>
 
-      {/* Legend */}
+      {/* Premium Legend Overlay */}
       {decoded.length > 0 && (
-        <div className="absolute bottom-3 left-3 z-[1000] flex items-center gap-2 flex-wrap">
-          <div className="bg-[#0d1017]/95 backdrop-blur border border-white/[0.06] rounded-lg px-3 py-2 flex items-center gap-3">
+        <div className="absolute bottom-8 left-8 right-8 z-[1000] flex justify-between items-end pointer-events-none">
+          <div className="bg-white/95 backdrop-blur-xl rounded-2xl px-6 py-4 flex gap-8 shadow-2xl border border-white/50 pointer-events-auto">
             {decoded.map((r) => (
-              <div key={r.routeType} className="flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full" style={{ background: ROUTE_COLORS[r.routeType] }} />
-                <span className="text-[10px] text-gray-500 capitalize font-mono">{r.routeType}</span>
+              <div key={r.routeType} className={`flex items-center gap-2.5 transition-opacity ${activeRoute === r.routeType ? 'opacity-100' : 'opacity-40'}`}>
+                <span
+                  className="w-3 h-3 rounded-full shadow-inner"
+                  style={{ background: ROUTE_COLORS[r.routeType] }}
+                />
+                <span className="text-[10px] font-black text-gray-900 uppercase tracking-widest leading-none">{r.routeType}</span>
               </div>
             ))}
           </div>
 
-          {plannedStops.length > 0 && (
-            <div className="bg-[#0d1017]/95 backdrop-blur border border-teal-500/20 rounded-lg px-3 py-2 flex items-center gap-2">
-              <div className="w-4 h-4 rounded-full border border-teal-500/60 flex items-center justify-center">
-                <span className="text-[8px] font-bold text-teal-400">1</span>
+          {(plannedStops.length > 0 || gasLoading) && (
+            <div className={`bg-blue-600 rounded-2xl px-6 py-4 flex items-center gap-3 shadow-2xl shadow-blue-500/30 border border-blue-400/30 transition-all duration-500 pointer-events-auto ${gasLoading ? 'translate-y-0 opacity-100' : 'translate-y-0 opacity-100'}`}>
+              <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center">
+                <span className={`text-white text-xs font-black ${gasLoading ? 'animate-spin' : ''}`}>
+                  {gasLoading ? '○' : plannedStops.length}
+                </span>
               </div>
-              <span className="text-[10px] text-teal-500 font-mono">fuel stops</span>
+              <div>
+                <div className="text-[9px] font-black text-blue-100 uppercase tracking-widest leading-none mb-1">Fuel Planning</div>
+                <div className="text-[11px] font-black text-white uppercase tracking-wider">
+                  {gasLoading ? 'Calculating Assets...' : 'Optimal Stops Found'}
+                </div>
+              </div>
             </div>
           )}
-        </div>
-      )}
-
-      {/* Gas loading indicator */}
-      {gasLoading && (
-        <div className="absolute top-3 right-12 z-[1000] bg-[#0d1017]/95 backdrop-blur border border-teal-500/20 rounded-full px-3 py-1.5 flex items-center gap-2">
-          <span className="w-1.5 h-1.5 rounded-full bg-teal-400 animate-pulse" />
-          <span className="text-[11px] text-teal-400 font-mono">planning stops…</span>
         </div>
       )}
     </div>

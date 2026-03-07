@@ -5,15 +5,14 @@ import HeatmapLayer from '../components/Map/HeatmapLayer';
 import IntersectionMarkers from '../components/Intersection/IntersectionMarkers';
 import ReportModal from '../components/Intersection/ReportModal';
 import ParkingMarkers from '../components/Parking/ParkingMarkers';
-import ParkingPanel from '../components/Parking/ParkingPanel';
 import BikeSegments from '../components/Bike/BikeSegments';
 import BikeFilterPanel from '../components/Bike/BikeFilterPanel';
-import RouteSearchPanel from '../components/Map/RouteSearchPanel';
 import RouteLayer from '../components/Map/RouteLayer';
-import { intersectionApi, parkingApi, bikeApi } from '../api';
+import { intersectionApi, parkingApi, bikeApi, routeApi } from '../api';
+import toast from 'react-hot-toast';
 
 export default function HomePage() {
-  const [activeLayers, setActiveLayers] = useState(['intersections', 'parking', 'bike']);
+  const [activeLayers, setActiveLayers] = useState(['intersections', 'greenp', 'street_parking', 'bike']);
   const [intersections, setIntersections] = useState([]);
   const [hotspots, setHotspots] = useState([]);
   const [parkingSpots, setParkingSpots] = useState([]);
@@ -21,16 +20,26 @@ export default function HomePage() {
   const [bikeMinScore, setBikeMinScore] = useState(0);
   const [route, setRoute] = useState(null);
   const [userLocation, setUserLocation] = useState(null);
-  const [clickedDest, setClickedDest] = useState(null);
+  const [mapCenter, setMapCenter] = useState(null);
+  const [hasCentered, setHasCentered] = useState(false);
+  const [travelMode, setTravelMode] = useState('DRIVE'); // DRIVE or BICYCLE
+  const [loadingRoute, setLoadingRoute] = useState(false);
 
   useEffect(() => {
     if (!navigator.geolocation) return;
     navigator.geolocation.getCurrentPosition(
-      (pos) => setUserLocation([pos.coords.latitude, pos.coords.longitude]),
-      () => {},
+      (pos) => {
+        const coords = [pos.coords.latitude, pos.coords.longitude];
+        setUserLocation(coords);
+        if (!hasCentered) {
+          setMapCenter(coords);
+          setHasCentered(true);
+        }
+      },
+      () => { },
       { enableHighAccuracy: true, timeout: 8000 },
     );
-  }, []);
+  }, [hasCentered]);
 
   const loadIntersections = useCallback(async () => {
     try {
@@ -61,6 +70,29 @@ export default function HomePage() {
   useEffect(() => { loadParking(); }, [loadParking]);
   useEffect(() => { loadBike(); }, [loadBike]);
 
+  const handleMapClick = async (coords) => {
+    if (!userLocation) {
+      toast.error('Getting your location... try again in a moment');
+      return;
+    }
+
+    setLoadingRoute(true);
+    try {
+      const res = await routeApi.navigate({
+        origin: { lat: userLocation[0], lng: userLocation[1] },
+        destination: coords,
+        travelMode: travelMode,
+      });
+      // Ensure the route object contains the travelMode for color logic in RouteLayer
+      setRoute({ ...res.data, travelMode });
+      toast.success(`${travelMode === 'DRIVE' ? 'Car' : 'Bike'} route calculated`);
+    } catch (err) {
+      toast.error('Could not find a valid route');
+    } finally {
+      setLoadingRoute(false);
+    }
+  };
+
   const toggleLayer = (id) => {
     setActiveLayers((prev) =>
       prev.includes(id) ? prev.filter((l) => l !== id) : [...prev, id]
@@ -68,43 +100,157 @@ export default function HomePage() {
   };
 
   return (
-    <div className="relative w-full h-screen">
-      <MapContainer center={userLocation} userLocation={userLocation} onMapClick={setClickedDest}>
-        <ReportModal onReported={loadIntersections} />
+    <div className="relative w-full h-screen overflow-hidden bg-white">
+      {/* Background Map */}
+      <div className="absolute inset-0 z-0">
+        <MapContainer center={mapCenter} userLocation={userLocation} onMapClick={handleMapClick}>
+          <ReportModal onReported={loadIntersections} />
 
-        {activeLayers.includes('intersections') && (
-          <IntersectionMarkers reports={intersections} grouped={hotspots} />
-        )}
+          {activeLayers.includes('intersections') && (
+            <IntersectionMarkers reports={intersections} grouped={hotspots} />
+          )}
 
-        {activeLayers.includes('heatmap') && (
-          <HeatmapLayer points={intersections} />
-        )}
+          {activeLayers.includes('heatmap') && (
+            <HeatmapLayer points={intersections} />
+          )}
 
-        {activeLayers.includes('parking') && (
-          <ParkingMarkers spots={parkingSpots} onUpdate={loadParking} />
-        )}
+          {activeLayers.includes('greenp') && (
+            <ParkingMarkers
+              spots={parkingSpots.filter(spot => spot.source === 'green_p')}
+              onUpdate={loadParking}
+            />
+          )}
 
-        {activeLayers.includes('bike') && (
-          <BikeSegments segments={bikeSegments} />
-        )}
+          {activeLayers.includes('street_parking') && (
+            <ParkingMarkers
+              spots={parkingSpots.filter(spot => spot.source === 'user_reported')}
+              onUpdate={loadParking}
+            />
+          )}
 
-        {route && <RouteLayer route={route} />}
-      </MapContainer>
+          {activeLayers.includes('bike') && (
+            <BikeSegments segments={bikeSegments} />
+          )}
 
-      <RouteSearchPanel
-        userLocation={userLocation}
-        clickedDest={clickedDest}
-        onRouteFound={setRoute}
-        onRouteClear={() => setRoute(null)}
-      />
+          {route && <RouteLayer route={route} />}
+        </MapContainer>
+      </div>
 
-      <LayerControl activeLayers={activeLayers} onToggle={toggleLayer} />
+      {/* Floating Mode Toggle Top Left */}
+      <div className="absolute top-6 left-6 z-[1001] pointer-events-none">
+        <div className="pointer-events-auto flex flex-col gap-3">
+          <div className="glass-panel rounded-2xl p-1.5 flex bg-white/90 backdrop-blur shadow-xl border border-gray-100 min-w-40 overflow-hidden">
+            <button
+              onClick={() => {
+                setTravelMode('DRIVE');
+                if (route) setRoute(null);
+              }}
+              className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${travelMode === 'DRIVE' ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/30' : 'text-gray-400 hover:text-gray-600 hover:bg-gray-50'
+                }`}
+            >
+              <span className="text-sm">🚗</span>
+              {!route && <span>Car</span>}
+            </button>
+            <button
+              onClick={() => {
+                setTravelMode('BICYCLE');
+                if (route) setRoute(null);
+              }}
+              className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${travelMode === 'BICYCLE' ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-500/30' : 'text-gray-400 hover:text-gray-600 hover:bg-gray-50'
+                }`}
+            >
+              <span className="text-sm">🚲</span>
+              {!route && <span>Bike</span>}
+            </button>
+          </div>
 
-      {activeLayers.includes('parking') && <ParkingPanel />}
+          <div className="flex gap-2">
+            <div className="px-4 py-2 bg-white/80 backdrop-blur border border-gray-100 rounded-full shadow-sm">
+              <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest leading-none">
+                {loadingRoute ? 'Calculating...' : 'Tap map for destination'}
+              </span>
+            </div>
 
-      {activeLayers.includes('bike') && (
-        <BikeFilterPanel minScore={bikeMinScore} onMinScoreChange={setBikeMinScore} />
+            {userLocation && (
+              <button
+                onClick={() => setMapCenter([...userLocation])}
+                className="p-2.5 rounded-full bg-white border border-gray-100 shadow-sm text-blue-600 hover:bg-blue-50 transition-colors group"
+                title="Recenter Map"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="group-active:scale-90 transition-transform">
+                  <path d="M12 2v4M12 18v4M4 12H0M24 12h-4M12 12m-6 0a6 6 0 1 0 12 0a6 6 0 1 0 -12 0" />
+                </svg>
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+
+      <div className="absolute top-6 right-6 z-[1001]">
+        <LayerControl activeLayers={activeLayers} onToggle={toggleLayer} />
+      </div>
+
+      {/* Active Navigation Bottom Bar */}
+      {route && (
+        <div className="absolute bottom-10 left-[72px] right-0 flex justify-center z-[1001] pointer-events-none px-10">
+          <div className="bg-white/95 backdrop-blur-xl rounded-[2.5rem] p-5 flex items-center justify-between gap-12 pointer-events-auto shadow-2xl border border-white/50 animate-in slide-in-from-bottom duration-500 min-w-[600px]">
+            <div className="flex items-center gap-8 pl-6">
+              <div className="flex items-center gap-4">
+                <div className={`w-14 h-14 rounded-2xl flex items-center justify-center text-2xl shadow-inner ${route.travelMode === 'BICYCLE' ? 'bg-emerald-50 text-emerald-600' : 'bg-blue-50 text-blue-600'
+                  }`}>
+                  {route.travelMode === 'BICYCLE' ? '🚲' : '🚗'}
+                </div>
+                <div>
+                  <div className="text-[10px] font-black text-gray-300 uppercase tracking-widest leading-none mb-1">Navigation</div>
+                  <div className="text-sm font-black text-gray-800">Live {route.travelMode === 'BICYCLE' ? 'Bike Route' : 'Driving Path'}</div>
+                </div>
+              </div>
+
+              <div className="w-[1px] h-10 bg-gray-100"></div>
+
+              <div className="flex items-center gap-8">
+                <div className="text-center">
+                  <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">ETA</div>
+                  <div className={`text-3xl font-black tabular-nums ${route.travelMode === 'BICYCLE' ? 'text-emerald-600' : 'text-blue-600'
+                    }`}>
+                    {route.duration}<span className="text-sm ml-1 font-bold">min</span>
+                  </div>
+                </div>
+                <div className="text-center">
+                  <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Distance</div>
+                  <div className="text-3xl font-black text-gray-800 tabular-nums">
+                    {route.distance.toFixed(1)}<span className="text-sm ml-1 font-bold">km</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex gap-4 pr-2">
+              <button
+                onClick={() => setRoute(null)}
+                className="px-10 py-5 rounded-2xl bg-gray-50 text-gray-500 font-black text-xs uppercase tracking-widest hover:bg-gray-100 hover:text-gray-700 active:scale-95 transition-all outline-none"
+              >
+                Cancel
+              </button>
+              <button className={`px-12 py-5 rounded-2xl text-white font-black text-xs uppercase tracking-widest shadow-xl active:scale-95 transition-all ${route.travelMode === 'BICYCLE'
+                ? 'bg-emerald-600 shadow-emerald-500/30 hover:bg-emerald-700'
+                : 'bg-blue-600 shadow-blue-500/30 hover:bg-blue-700'
+                }`}>
+                Start Now
+              </button>
+            </div>
+          </div>
+        </div>
       )}
-    </div>
+
+      {/* Secondary Controls */}
+      <div className="absolute bottom-6 right-6 pointer-events-none z-[1001]">
+        <div className="pointer-events-auto">
+          {activeLayers.includes('bike') && (
+            <BikeFilterPanel minScore={bikeMinScore} onMinScoreChange={setBikeMinScore} />
+          )}
+        </div>
+      </div>
+    </div >
   );
 }

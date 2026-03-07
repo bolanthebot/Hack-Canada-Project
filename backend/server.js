@@ -18,7 +18,7 @@ app.use('/api/dashboard', require('./routes/dashboard'));
 app.get('/api/health', (_req, res) => res.json({ status: 'ok' }));
 
 const PORT = process.env.PORT || 5000;
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/urbanflow';
+const MONGODB_URI = process.env.MONGODB_URI;
 
 mongoose
   .connect(MONGODB_URI)

@@ -25,7 +25,6 @@ router.get('/segments', async (req, res) => {
     const filter = { safetyScore: { $gte: minScore } };
 
     const segments = await BikeSegment.find(filter)
-      .limit(500)
       .select('name safetyScore hasLane geometry lighting trafficSpeed accidentCount roadWidth');
 
     setCache(cacheKey, segments);
