@@ -15,7 +15,6 @@ const VALID_MODES = ['DRIVE', 'BICYCLE', 'WALK'];
 
 const ONTARIO_CSV_URL = 'https://ontario.ca/v1/files/fuel-prices/canadianpumppricesall.csv';
 
-// Hardcoded fallback (¢/L) if CSV fetch fails
 const FALLBACK_PRICES = {
   toronto: 172,
   ottawa: 165,
@@ -32,7 +31,6 @@ const CITY_COORDS = {
   montreal: { lat: 45.5017, lng: -73.5673 },
 };
 
-// Overpass mirrors — rotated on 429
 const OVERPASS_ENDPOINTS = [
   'https://overpass-api.de/api/interpreter',
   'https://overpass.kumi.systems/api/interpreter',
@@ -43,24 +41,16 @@ const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
 // ---------------------------------------------------------------------------
 // Ontario Open Data CSV price fetcher
-//
-// CSV column layout (after splitting on comma — note two quoted cities split):
-//   0:Date  1:Toronto  2:Ottawa  3:Thunder Bay  4:St.John's  5:Newfoundland
-//   6:Charlottetown  7:Halifax  8:Saint John  9:New Brunswick
-//   10:Montreal  11:Winnipeg  12:Regina  13:Calgary  14:Vancouver
-//   15:Tax Status  16:Situation fiscale
-// ---------------------------------------------------------------------------
-
-// Data rows have 15 columns (quoted city names with commas are NOT split in data rows,
-// only in the header). Actual layout:
+// Data row layout (15 cols — quoted cities with commas are NOT split in data):
 //   0:Date  1:Toronto  2:Ottawa  3:Thunder Bay  4:St.John's/NL  5:Charlottetown
 //   6:Halifax  7:Saint John/NB  8:Montreal  9:Winnipeg  10:Regina  11:Calgary
 //   12:Vancouver  13:Tax Status  14:Situation fiscale
+// ---------------------------------------------------------------------------
 const CSV_COL = { date: 0, toronto: 1, ottawa: 2, montreal: 8, taxStatus: 13 };
 
 let priceCache = null;
 let priceCacheTime = 0;
-const CACHE_TTL_MS = 6 * 60 * 60 * 1000; // 6 hours
+const CACHE_TTL_MS = 6 * 60 * 60 * 1000;
 
 async function fetchOntarioPrices() {
   const now = Date.now();
@@ -72,13 +62,9 @@ async function fetchOntarioPrices() {
   try {
     console.log('  Gas prices: fetching Ontario Open Data CSV...');
     const { data: csv } = await axios.get(ONTARIO_CSV_URL, { timeout: 10000 });
-
-    // Handle both \r\n and \n line endings
     const lines = csv.trim().split(/\r?\n/);
-
     let latestPrices = null;
 
-    // Scan from bottom — find the most recent "Total" row
     for (let i = lines.length - 1; i >= 1; i--) {
       const cols = lines[i].split(',').map(c => c.replace(/"/g, '').trim());
       if (cols[CSV_COL.taxStatus]?.toLowerCase() !== 'total') continue;
@@ -94,7 +80,6 @@ async function fetchOntarioPrices() {
         toronto,
         ottawa,
         montreal: isNaN(montreal) ? Math.round((toronto + ottawa) / 2) : montreal,
-        // Interpolate missing cities
         kingston: Math.round((toronto + ottawa) / 2),
         oshawa: Math.round((toronto * 2 + ottawa) / 3),
       };
@@ -104,13 +89,42 @@ async function fetchOntarioPrices() {
     }
 
     if (!latestPrices) throw new Error('No valid Total row found in CSV');
-
     priceCache = latestPrices;
     priceCacheTime = now;
     return latestPrices;
   } catch (err) {
     console.warn(`  Gas prices: CSV failed (${err.message}) — using hardcoded fallback`);
     return FALLBACK_PRICES;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Parse ALL historical Total rows from CSV for trend analysis
+// Returns array of { date, toronto, ottawa, montreal } sorted oldest → newest
+// ---------------------------------------------------------------------------
+async function fetchOntarioPriceHistory() {
+  try {
+    const { data: csv } = await axios.get(ONTARIO_CSV_URL, { timeout: 10000 });
+    const lines = csv.trim().split(/\r?\n/);
+    const history = [];
+
+    for (let i = 1; i < lines.length; i++) {
+      const cols = lines[i].split(',').map(c => c.replace(/"/g, '').trim());
+      if (cols[CSV_COL.taxStatus]?.toLowerCase() !== 'total') continue;
+
+      const toronto = parseFloat(cols[CSV_COL.toronto]);
+      const ottawa = parseFloat(cols[CSV_COL.ottawa]);
+      const montreal = parseFloat(cols[CSV_COL.montreal]);
+      const date = cols[CSV_COL.date];
+
+      if (isNaN(toronto) || isNaN(ottawa) || !date) continue;
+      history.push({ date, toronto, ottawa, montreal: isNaN(montreal) ? null : montreal });
+    }
+
+    return history; // already chronological in CSV
+  } catch (err) {
+    console.warn(`  Price history fetch failed: ${err.message}`);
+    return [];
   }
 }
 
@@ -229,7 +243,6 @@ function haversineKm(lat1, lng1, lat2, lng2) {
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
-// Fetch stations — sequential radius expansion + mirror rotation on 429
 async function fetchNearbyGasStations(lat, lng) {
   for (const radiusM of [5000, 10000, 15000]) {
     const query = `[out:json];node["amenity"="fuel"](around:${radiusM},${lat},${lng});out;`;
@@ -239,10 +252,7 @@ async function fetchNearbyGasStations(lat, lng) {
         const url = `${endpoint}?data=${encodeURIComponent(query)}`;
         const { data } = await axios.get(url, { timeout: 15000 });
 
-        if (!data.elements || data.elements.length === 0) {
-          // No results at this radius — break out of mirror loop, try wider
-          break;
-        }
+        if (!data.elements || data.elements.length === 0) break;
 
         const host = endpoint.split('/')[2];
         console.log(`  Overpass [${host}]: ${data.elements.length} stations at ${radiusM / 1000}km for (${lat.toFixed(4)}, ${lng.toFixed(4)})`);
@@ -262,7 +272,7 @@ async function fetchNearbyGasStations(lat, lng) {
           console.warn(`  Overpass 429 on ${host} — trying next mirror`);
           await sleep(500);
         } else {
-          console.error(`  Overpass error on ${host}: ${err.message}`);
+          console.warn(`  Overpass skipping ${host}: ${err.response?.status || err.message}`);
         }
       }
     }
@@ -404,14 +414,13 @@ router.post('/gas-stops', async (req, res) => {
       });
     }
 
-    // Fetch prices first, then stations sequentially to respect Overpass rate limits
     console.log('\nFetching prices...');
     const prices = await fetchOntarioPrices();
 
     console.log('\nFetching stations (sequential to avoid rate limits)...');
     const stationResultsPerZone = [];
     for (let i = 0; i < stopZones.length; i++) {
-      if (i > 0) await sleep(1500); // pause between zones
+      if (i > 0) await sleep(1500);
       stationResultsPerZone.push(await fetchNearbyGasStations(stopZones[i].lat, stopZones[i].lng));
     }
 
@@ -427,7 +436,6 @@ router.post('/gas-stops', async (req, res) => {
       if (stations.length > 5) console.log(`    ... +${stations.length - 5} more`);
     });
 
-    // Build planned stops
     const plannedStops = [];
     let fuelKmRemaining = (currentFuelPercent / 100) * tankKm;
     let prevDist = 0;
@@ -485,6 +493,141 @@ router.post('/gas-stops', async (req, res) => {
   } catch (err) {
     console.error('Gas stops error:', err.message);
     res.status(500).json({ error: err.message });
+  }
+});
+
+// ---------------------------------------------------------------------------
+
+// ---------------------------------------------------------------------------
+// POST /api/routes/market-intelligence
+// Uses Claude with web_search (agentic loop) to analyze geopolitical/economic
+// events affecting oil prices, combined with historical CSV trend data.
+// Request body: { city?: string }
+// ---------------------------------------------------------------------------
+router.post('/market-intelligence', async (req, res) => {
+  const { city = 'Ontario' } = req.body;
+  const anthropicKey = process.env.ANTHROPIC_API_KEY;
+
+  if (!anthropicKey) {
+    return res.status(500).json({ error: 'ANTHROPIC_API_KEY not configured' });
+  }
+
+  console.log('\n========== MARKET INTELLIGENCE ==========');
+  console.log(`Region: ${city}`);
+
+  try {
+    // 1. Historical price trend analysis from CSV
+    console.log('Fetching price history...');
+    const history = await fetchOntarioPriceHistory();
+    const recent = history.slice(-12);
+    const torontoRecent = recent.map(r => r.toronto).filter(Boolean);
+    const avg12 = (torontoRecent.reduce((a, b) => a + b, 0) / torontoRecent.length).toFixed(1);
+    const latest = torontoRecent[torontoRecent.length - 1];
+    const fourWeeksAgo = torontoRecent[torontoRecent.length - 4] ?? torontoRecent[0];
+    const trend4w = (latest - fourWeeksAgo).toFixed(1);
+    const trendDirection = trend4w > 0 ? 'rising' : trend4w < 0 ? 'falling' : 'flat';
+    const recentSummary = recent.slice(-6).map(r =>
+      `${r.date}: Toronto ${r.toronto}c/L, Ottawa ${r.ottawa}c/L`
+    ).join('\n');
+
+    console.log(`Stats - latest:${latest}c | avg:${avg12}c | trend:${trend4w > 0 ? '+' : ''}${trend4w}c (${trendDirection})`);
+
+    // 2. Agentic Claude loop with web search
+    console.log('Starting Claude agentic loop...');
+
+    const prompt = `You are a fuel price analyst for Canadian drivers. Analyze current world events and their impact on gasoline prices in ${city}, Canada.
+
+Recent Ontario pump price data (cents per litre, taxes included):
+${recentSummary}
+
+Current price: ${latest}c/L | 12-month average: ${avg12}c/L | 4-week trend: ${trend4w > 0 ? '+' : ''}${trend4w}c/L (${trendDirection})
+
+Search the web for the latest news (last 7 days) on:
+1. Geopolitical events affecting oil supply (Middle East, OPEC, sanctions, conflicts)
+2. Crude oil price movements and supply/demand shifts
+3. Canada-specific fuel price news
+
+Return ONLY a JSON object, no markdown fences, no preamble:
+{
+  "currentPriceCents": ${latest},
+  "avgPriceCents": ${avg12},
+  "trendCentsPerMonth": ${trend4w},
+  "trendDirection": "${trendDirection}",
+  "geopoliticalEvents": [{"event": "string", "impact": "string", "severity": "low|medium|high"}],
+  "oilMarketSummary": "2-3 sentence summary",
+  "priceOutlook": "rising|falling|stable",
+  "predictedRangeLow": 0,
+  "predictedRangeHigh": 0,
+  "recommendation": "fill_now|wait|neutral",
+  "recommendationReason": "1-2 sentence plain English for a driver",
+  "confidence": "low|medium|high",
+  "lastUpdated": "${new Date().toISOString().split('T')[0]}"
+}`;
+
+    const messages = [{ role: 'user', content: prompt }];
+    const tools = [{ type: 'web_search_20250305', name: 'web_search' }];
+    const headers = {
+      'x-api-key': anthropicKey,
+      'anthropic-version': '2023-06-01',
+      'content-type': 'application/json',
+    };
+
+    let finalText = '';
+    let turns = 0;
+
+    while (turns < 8) {
+      turns++;
+      console.log(`  Turn ${turns}...`);
+
+      const { data } = await axios.post(
+        'https://api.anthropic.com/v1/messages',
+        { model: 'claude-sonnet-4-20250514', max_tokens: 1500, tools, messages },
+        { headers, timeout: 60000 }
+      );
+
+      const { content, stop_reason } = data;
+      console.log(`  stop_reason: ${stop_reason} | blocks: [${content.map(b => b.type).join(', ')}]`);
+
+      const text = content.filter(b => b.type === 'text').map(b => b.text).join('');
+      if (text) finalText = text;
+
+      if (stop_reason === 'end_turn') break;
+
+      if (stop_reason === 'tool_use') {
+        messages.push({ role: 'assistant', content });
+
+        const resultBlocks = content.filter(b =>
+          b.type === 'web_search_tool_result' || b.type === 'tool_result'
+        );
+
+        if (resultBlocks.length > 0) {
+          messages.push({ role: 'user', content: resultBlocks });
+        } else {
+          messages.push({ role: 'user', content: [{ type: 'text', text: 'Please continue with your analysis.' }] });
+        }
+        continue;
+      }
+
+      break;
+    }
+
+    console.log(`Claude done in ${turns} turn(s)`);
+    console.log('Raw text (first 300):', finalText.slice(0, 300));
+
+    if (!finalText) throw new Error('Claude returned no text after agentic loop');
+
+    const clean = finalText.replace(/```json|```/g, '').trim();
+    const intelligence = JSON.parse(clean);
+
+    console.log(`Outlook:${intelligence.priceOutlook} | Rec:${intelligence.recommendation} | Confidence:${intelligence.confidence}`);
+    console.log('==========================================\n');
+
+    res.json(intelligence);
+  } catch (err) {
+    console.error('Market intelligence error:', JSON.stringify(err.response?.data) || err.message);
+    console.error('Status:', err.response?.status);
+    console.error('Stack:', err.stack?.split('\n').slice(0, 4).join('\n'));
+    res.status(500).json({ error: 'Market intelligence unavailable', fallback: true, message: err.message });
   }
 });
 
