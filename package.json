@@ -6,7 +6,7 @@
     "dev": "concurrently \"npm run dev:frontend\" \"npm run dev:backend\" \"npm run dev:ml\"",
     "dev:frontend": "cd frontend && npm run dev",
     "dev:backend": "cd backend && node server.js",
-    "dev:ml": "cd ml-service && py app.py",
+    "dev:ml": "cd ml-service && python app.py",
     "install:all": "npm install && cd frontend && npm install && cd ../backend && npm install",
     "seed": "cd backend && node seed.js"
   },

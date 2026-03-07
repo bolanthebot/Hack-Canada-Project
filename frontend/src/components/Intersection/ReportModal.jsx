@@ -29,6 +29,7 @@ export default function ReportModal({ onReported }) {
     e.preventDefault();
     setSubmitting(true);
     try {
+      // NOTE: Intersection backend has been deleted.
       await intersectionApi.create({
         location: { type: 'Point', coordinates: [latlng.lng, latlng.lat] },
         reportType,

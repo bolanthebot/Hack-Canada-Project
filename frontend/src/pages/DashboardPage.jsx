@@ -8,6 +8,7 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // NOTE: Dashboard backend has been deleted.
     dashboardApi
       .getStats()
       .then((res) => setStats(res.data))

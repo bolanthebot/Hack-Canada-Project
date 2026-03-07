@@ -41,6 +41,7 @@ export default function RoutePlanner() {
     e.preventDefault();
     setLoading(true);
     try {
+      // NOTE: Route backend has been deleted.
       const res = await routeApi.plan({
         origin: [parseFloat(originLng), parseFloat(originLat)],
         destination: [parseFloat(destLng), parseFloat(destLat)],

@@ -17,6 +17,7 @@ export default function ParkingMarkers({ spots, onUpdate }) {
   const toggleStatus = async (spot) => {
     const newStatus = spot.status === 'available' ? 'taken' : 'available';
     try {
+      // NOTE: Parking backend has been deleted.
       await parkingApi.report({
         location: spot.location,
         status: newStatus,

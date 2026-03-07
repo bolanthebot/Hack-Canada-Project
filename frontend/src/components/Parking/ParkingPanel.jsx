@@ -9,6 +9,7 @@ export default function ParkingPanel() {
   const predict = async () => {
     setLoading(true);
     try {
+      // NOTE: ML backend for parking has been deleted.
       const res = await parkingApi.predict({
         hour,
         day_of_week: new Date().getDay(),

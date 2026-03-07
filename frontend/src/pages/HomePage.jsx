@@ -20,27 +20,30 @@ export default function HomePage() {
 
   const loadIntersections = useCallback(async () => {
     try {
+      // NOTE: Intersection backend has been deleted. This will fail.
       const [reportsRes, hotspotsRes] = await Promise.all([
         intersectionApi.getAll(),
         intersectionApi.getHotspots(),
       ]);
       setIntersections(reportsRes.data);
       setHotspots(hotspotsRes.data);
-    } catch { /* empty */ }
+    } catch { console.log("Intersection data didn't load") }
   }, []);
 
   const loadParking = useCallback(async () => {
     try {
+      // NOTE: Parking backend has been deleted.
       const res = await parkingApi.getAll();
       setParkingSpots(res.data);
-    } catch { /* empty */ }
+    } catch { console.log("Parking data didn't load") }
   }, []);
 
   const loadBike = useCallback(async () => {
     try {
+      // NOTE: Bike backend has been deleted.
       const res = await bikeApi.getSegments({ minScore: bikeMinScore });
       setBikeSegments(res.data);
-    } catch { /* empty */ }
+    } catch { console.log("Bike data didn't load") }
   }, [bikeMinScore]);
 
   useEffect(() => { loadIntersections(); }, [loadIntersections]);
