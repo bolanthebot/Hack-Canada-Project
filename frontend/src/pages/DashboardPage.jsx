@@ -12,7 +12,7 @@ export default function DashboardPage() {
     dashboardApi
       .getStats()
       .then((res) => setStats(res.data))
-      .catch(() => {})
+      .catch(() => { })
       .finally(() => setLoading(false));
   }, []);
 
