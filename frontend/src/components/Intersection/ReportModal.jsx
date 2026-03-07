@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useMapEvents } from 'react-leaflet';
+import L from 'leaflet';
 import { intersectionApi } from '../../api';
 import toast from 'react-hot-toast';
 
@@ -17,6 +18,7 @@ export default function ReportModal({ onReported }) {
   const [severity, setSeverity] = useState(3);
   const [description, setDescription] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const modalRef = useRef(null);
 
   useMapEvents({
     click(e) {
@@ -24,6 +26,13 @@ export default function ReportModal({ onReported }) {
       setOpen(true);
     },
   });
+
+  useEffect(() => {
+    if (!open || !modalRef.current) return;
+    // Prevent modal interactions from triggering map click handlers.
+    L.DomEvent.disableClickPropagation(modalRef.current);
+    L.DomEvent.disableScrollPropagation(modalRef.current);
+  }, [open]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -51,7 +60,10 @@ export default function ReportModal({ onReported }) {
   if (!open) return null;
 
   return (
-    <div className="absolute top-3 left-3 z-[1000] bg-[#161a23] rounded-lg p-4 shadow-lg w-72 border border-white/[0.05]">
+    <div
+      ref={modalRef}
+      className="absolute top-3 left-3 z-[1000] bg-[#161a23] rounded-lg p-4 shadow-lg w-72 border border-white/[0.05]"
+    >
       <div className="flex items-center justify-between mb-3">
         <h3 className="text-[13px] font-semibold text-gray-200">New report</h3>
         <button
