@@ -9,6 +9,8 @@ const FIELD_MASK = [
   'routes.polyline.encodedPolyline',
 ].join(',');
 
+const VALID_MODES = ['DRIVE', 'BICYCLE', 'WALK'];
+
 function buildWaypoint(input) {
   if (typeof input === 'string') {
     return { address: input };
@@ -30,10 +32,23 @@ function buildWaypoint(input) {
   throw new Error('Invalid waypoint format — provide an address string, [lng, lat] array, or { lat, lng } object');
 }
 
-async function fetchRoute(origin, destination, routeModifiers = {}) {
+async function fetchRoute(origin, destination, { travelMode = 'DRIVE', routeModifiers = {} } = {}) {
   const apiKey = process.env.GOOGLE_MAPS_API_KEY;
   if (!apiKey || apiKey === 'YOUR_GOOGLE_MAPS_API_KEY_HERE') {
     throw new Error('GOOGLE_MAPS_API_KEY is not configured in .env');
+  }
+
+  const body = {
+    origin: buildWaypoint(origin),
+    destination: buildWaypoint(destination),
+    travelMode,
+    languageCode: 'en-US',
+    units: 'METRIC',
+  };
+
+  if (travelMode === 'DRIVE') {
+    body.routingPreference = 'TRAFFIC_AWARE_OPTIMAL';
+    body.routeModifiers = routeModifiers;
   }
 
   const response = await fetch(ROUTES_API, {
@@ -43,15 +58,7 @@ async function fetchRoute(origin, destination, routeModifiers = {}) {
       'X-Goog-Api-Key': apiKey,
       'X-Goog-FieldMask': FIELD_MASK,
     },
-    body: JSON.stringify({
-      origin: buildWaypoint(origin),
-      destination: buildWaypoint(destination),
-      travelMode: 'DRIVE',
-      routingPreference: 'TRAFFIC_AWARE_OPTIMAL',
-      routeModifiers,
-      languageCode: 'en-US',
-      units: 'METRIC',
-    }),
+    body: JSON.stringify(body),
   });
 
   if (!response.ok) {
@@ -77,7 +84,31 @@ function parseRoute(raw) {
   };
 }
 
-// POST /api/routes/plan
+// POST /api/routes/navigate — single route for the main map
+router.post('/navigate', async (req, res) => {
+  try {
+    const { origin, destination, travelMode = 'DRIVE' } = req.body;
+
+    if (!origin || !destination) {
+      return res.status(400).json({ error: 'origin and destination are required' });
+    }
+
+    const mode = VALID_MODES.includes(travelMode.toUpperCase())
+      ? travelMode.toUpperCase()
+      : 'DRIVE';
+
+    const raw = await fetchRoute(origin, destination, { travelMode: mode });
+    const route = parseRoute(raw);
+    route.travelMode = mode;
+
+    res.json(route);
+  } catch (err) {
+    console.error('Navigate error:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// POST /api/routes/plan — compare fastest / cheapest / safest (driving only)
 router.post('/plan', async (req, res) => {
   try {
     const { origin, destination, fuelType = 'regular', fuelEfficiency = 10 } = req.body;
@@ -89,9 +120,9 @@ router.post('/plan', async (req, res) => {
     const gasPrice = GAS_PRICES[fuelType] || GAS_PRICES.regular;
 
     const [fastestRaw, cheapestRaw, safestRaw] = await Promise.all([
-      fetchRoute(origin, destination, {}),
-      fetchRoute(origin, destination, { avoidTolls: true }),
-      fetchRoute(origin, destination, { avoidHighways: true }),
+      fetchRoute(origin, destination, { travelMode: 'DRIVE' }),
+      fetchRoute(origin, destination, { travelMode: 'DRIVE', routeModifiers: { avoidTolls: true } }),
+      fetchRoute(origin, destination, { travelMode: 'DRIVE', routeModifiers: { avoidHighways: true } }),
     ]);
 
     const RISK_FACTOR = { fastest: 0.05, cheapest: 0.04, safest: 0.02 };

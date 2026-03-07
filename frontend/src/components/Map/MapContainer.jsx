@@ -1,12 +1,21 @@
-import { MapContainer as LeafletMap, TileLayer, ZoomControl } from 'react-leaflet';
+import { MapContainer as LeafletMap, TileLayer, ZoomControl, useMap, CircleMarker } from 'react-leaflet';
+import { useEffect } from 'react';
 import 'leaflet/dist/leaflet.css';
 
-const TORONTO_CENTER = [43.6532, -79.3832];
+const DEFAULT_CENTER = [43.6532, -79.3832];
 
-export default function MapContainer({ children, className = '' }) {
+function FlyToCenter({ center }) {
+  const map = useMap();
+  useEffect(() => {
+    if (center) map.flyTo(center, 14, { duration: 1.2 });
+  }, [center, map]);
+  return null;
+}
+
+export default function MapContainer({ children, center, userLocation, className = '' }) {
   return (
     <LeafletMap
-      center={TORONTO_CENTER}
+      center={center || DEFAULT_CENTER}
       zoom={13}
       zoomControl={false}
       className={`w-full h-full ${className}`}
@@ -17,6 +26,22 @@ export default function MapContainer({ children, className = '' }) {
         attribution='&copy; <a href="https://carto.com/">CARTO</a>'
         url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
       />
+
+      {center && <FlyToCenter center={center} />}
+
+      {userLocation && (
+        <CircleMarker
+          center={userLocation}
+          radius={8}
+          pathOptions={{
+            color: '#3b82f6',
+            fillColor: '#3b82f6',
+            fillOpacity: 0.35,
+            weight: 2,
+          }}
+        />
+      )}
+
       {children}
     </LeafletMap>
   );

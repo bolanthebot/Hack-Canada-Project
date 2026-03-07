@@ -8,6 +8,8 @@ import ParkingMarkers from '../components/Parking/ParkingMarkers';
 import ParkingPanel from '../components/Parking/ParkingPanel';
 import BikeSegments from '../components/Bike/BikeSegments';
 import BikeFilterPanel from '../components/Bike/BikeFilterPanel';
+import RouteSearchPanel from '../components/Map/RouteSearchPanel';
+import RouteLayer from '../components/Map/RouteLayer';
 import { intersectionApi, parkingApi, bikeApi } from '../api';
 
 export default function HomePage() {
@@ -17,10 +19,20 @@ export default function HomePage() {
   const [parkingSpots, setParkingSpots] = useState([]);
   const [bikeSegments, setBikeSegments] = useState([]);
   const [bikeMinScore, setBikeMinScore] = useState(0);
+  const [route, setRoute] = useState(null);
+  const [userLocation, setUserLocation] = useState(null);
+
+  useEffect(() => {
+    if (!navigator.geolocation) return;
+    navigator.geolocation.getCurrentPosition(
+      (pos) => setUserLocation([pos.coords.latitude, pos.coords.longitude]),
+      () => {},
+      { enableHighAccuracy: true, timeout: 8000 },
+    );
+  }, []);
 
   const loadIntersections = useCallback(async () => {
     try {
-      // NOTE: Intersection backend has been deleted. This will fail.
       const [reportsRes, hotspotsRes] = await Promise.all([
         intersectionApi.getAll(),
         intersectionApi.getHotspots(),
@@ -32,7 +44,6 @@ export default function HomePage() {
 
   const loadParking = useCallback(async () => {
     try {
-      // NOTE: Parking backend has been deleted.
       const res = await parkingApi.getAll();
       setParkingSpots(res.data);
     } catch { console.log("Parking data didn't load") }
@@ -40,7 +51,6 @@ export default function HomePage() {
 
   const loadBike = useCallback(async () => {
     try {
-      // NOTE: Bike backend has been deleted.
       const res = await bikeApi.getSegments({ minScore: bikeMinScore });
       setBikeSegments(res.data);
     } catch { console.log("Bike data didn't load") }
@@ -58,7 +68,7 @@ export default function HomePage() {
 
   return (
     <div className="relative w-full h-screen">
-      <MapContainer>
+      <MapContainer center={userLocation} userLocation={userLocation}>
         <ReportModal onReported={loadIntersections} />
 
         {activeLayers.includes('intersections') && (
@@ -76,7 +86,15 @@ export default function HomePage() {
         {activeLayers.includes('bike') && (
           <BikeSegments segments={bikeSegments} />
         )}
+
+        {route && <RouteLayer route={route} />}
       </MapContainer>
+
+      <RouteSearchPanel
+        userLocation={userLocation}
+        onRouteFound={setRoute}
+        onRouteClear={() => setRoute(null)}
+      />
 
       <LayerControl activeLayers={activeLayers} onToggle={toggleLayer} />
 
