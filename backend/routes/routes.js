@@ -1,4 +1,6 @@
 const router = require('express').Router();
+const axios = require('axios');
+const { decode } = require('@googlemaps/polyline-codec');
 
 const ROUTES_API = 'https://routes.googleapis.com/directions/v2:computeRoutes';
 const GAS_PRICES = { regular: 1.65, premium: 1.85, diesel: 1.72 };
@@ -11,25 +13,130 @@ const FIELD_MASK = [
 
 const VALID_MODES = ['DRIVE', 'BICYCLE', 'WALK'];
 
-function buildWaypoint(input) {
-  if (typeof input === 'string') {
-    return { address: input };
+const ONTARIO_CSV_URL = 'https://ontario.ca/v1/files/fuel-prices/canadianpumppricesall.csv';
+
+// Hardcoded fallback (¢/L) if CSV fetch fails
+const FALLBACK_PRICES = {
+  toronto: 172,
+  ottawa: 165,
+  kingston: 168,
+  oshawa: 170,
+  montreal: 163,
+};
+
+const CITY_COORDS = {
+  toronto: { lat: 43.6532, lng: -79.3832 },
+  ottawa: { lat: 45.4215, lng: -75.6972 },
+  kingston: { lat: 44.2312, lng: -76.4860 },
+  oshawa: { lat: 43.8971, lng: -78.8658 },
+  montreal: { lat: 45.5017, lng: -73.5673 },
+};
+
+// Overpass mirrors — rotated on 429
+const OVERPASS_ENDPOINTS = [
+  'https://overpass-api.de/api/interpreter',
+  'https://overpass.kumi.systems/api/interpreter',
+  'https://maps.mail.ru/osm/tools/overpass/api/interpreter',
+];
+
+const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+// ---------------------------------------------------------------------------
+// Ontario Open Data CSV price fetcher
+//
+// CSV column layout (after splitting on comma — note two quoted cities split):
+//   0:Date  1:Toronto  2:Ottawa  3:Thunder Bay  4:St.John's  5:Newfoundland
+//   6:Charlottetown  7:Halifax  8:Saint John  9:New Brunswick
+//   10:Montreal  11:Winnipeg  12:Regina  13:Calgary  14:Vancouver
+//   15:Tax Status  16:Situation fiscale
+// ---------------------------------------------------------------------------
+
+// Data rows have 15 columns (quoted city names with commas are NOT split in data rows,
+// only in the header). Actual layout:
+//   0:Date  1:Toronto  2:Ottawa  3:Thunder Bay  4:St.John's/NL  5:Charlottetown
+//   6:Halifax  7:Saint John/NB  8:Montreal  9:Winnipeg  10:Regina  11:Calgary
+//   12:Vancouver  13:Tax Status  14:Situation fiscale
+const CSV_COL = { date: 0, toronto: 1, ottawa: 2, montreal: 8, taxStatus: 13 };
+
+let priceCache = null;
+let priceCacheTime = 0;
+const CACHE_TTL_MS = 6 * 60 * 60 * 1000; // 6 hours
+
+async function fetchOntarioPrices() {
+  const now = Date.now();
+  if (priceCache && (now - priceCacheTime) < CACHE_TTL_MS) {
+    console.log('  Gas prices: using cached data');
+    return priceCache;
   }
+
+  try {
+    console.log('  Gas prices: fetching Ontario Open Data CSV...');
+    const { data: csv } = await axios.get(ONTARIO_CSV_URL, { timeout: 10000 });
+
+    // Handle both \r\n and \n line endings
+    const lines = csv.trim().split(/\r?\n/);
+
+    let latestPrices = null;
+
+    // Scan from bottom — find the most recent "Total" row
+    for (let i = lines.length - 1; i >= 1; i--) {
+      const cols = lines[i].split(',').map(c => c.replace(/"/g, '').trim());
+      if (cols[CSV_COL.taxStatus]?.toLowerCase() !== 'total') continue;
+
+      const toronto = parseFloat(cols[CSV_COL.toronto]);
+      const ottawa = parseFloat(cols[CSV_COL.ottawa]);
+      const montreal = parseFloat(cols[CSV_COL.montreal]);
+      const date = cols[CSV_COL.date];
+
+      if (isNaN(toronto) || isNaN(ottawa)) continue;
+
+      latestPrices = {
+        toronto,
+        ottawa,
+        montreal: isNaN(montreal) ? Math.round((toronto + ottawa) / 2) : montreal,
+        // Interpolate missing cities
+        kingston: Math.round((toronto + ottawa) / 2),
+        oshawa: Math.round((toronto * 2 + ottawa) / 3),
+      };
+
+      console.log(`  Gas prices: loaded for ${date} → Toronto:${toronto} Ottawa:${ottawa} Montreal:${latestPrices.montreal} Kingston:${latestPrices.kingston} Oshawa:${latestPrices.oshawa} ¢/L`);
+      break;
+    }
+
+    if (!latestPrices) throw new Error('No valid Total row found in CSV');
+
+    priceCache = latestPrices;
+    priceCacheTime = now;
+    return latestPrices;
+  } catch (err) {
+    console.warn(`  Gas prices: CSV failed (${err.message}) — using hardcoded fallback`);
+    return FALLBACK_PRICES;
+  }
+}
+
+function estimatePrice(lat, lng, prices) {
+  let closest = null;
+  let minDist = Infinity;
+  for (const [city, coords] of Object.entries(CITY_COORDS)) {
+    const d = Math.sqrt((lat - coords.lat) ** 2 + (lng - coords.lng) ** 2);
+    if (d < minDist) { minDist = d; closest = city; }
+  }
+  return prices[closest] ?? 168;
+}
+
+// ---------------------------------------------------------------------------
+// Route helpers
+// ---------------------------------------------------------------------------
+
+function buildWaypoint(input) {
+  if (typeof input === 'string') return { address: input };
   if (Array.isArray(input) && input.length === 2) {
-    return {
-      location: {
-        latLng: { latitude: input[1], longitude: input[0] },
-      },
-    };
+    return { location: { latLng: { latitude: input[1], longitude: input[0] } } };
   }
   if (input && input.lat != null && input.lng != null) {
-    return {
-      location: {
-        latLng: { latitude: input.lat, longitude: input.lng },
-      },
-    };
+    return { location: { latLng: { latitude: input.lat, longitude: input.lng } } };
   }
-  throw new Error('Invalid waypoint format — provide an address string, [lng, lat] array, or { lat, lng } object');
+  throw new Error('Invalid waypoint format');
 }
 
 async function fetchRoute(origin, destination, { travelMode = 'DRIVE', routeModifiers = {} } = {}) {
@@ -84,23 +191,128 @@ function parseRoute(raw) {
   };
 }
 
-// POST /api/routes/navigate — single route for the main map
+// ---------------------------------------------------------------------------
+// Gas stop helpers
+// ---------------------------------------------------------------------------
+
+function decodePolylineWithDistance(encodedPolyline) {
+  const points = decode(encodedPolyline);
+  if (points.length === 0) return [];
+
+  const result = [{ lat: points[0][0], lng: points[0][1], distFromStart: 0 }];
+  for (let i = 1; i < points.length; i++) {
+    const [lat1, lng1] = points[i - 1];
+    const [lat2, lng2] = points[i];
+    const R = 6371;
+    const dLat = ((lat2 - lat1) * Math.PI) / 180;
+    const dLng = ((lng2 - lng1) * Math.PI) / 180;
+    const a =
+      Math.sin(dLat / 2) ** 2 +
+      Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLng / 2) ** 2;
+    const segKm = R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    result.push({ lat: lat2, lng: lng2, distFromStart: result[i - 1].distFromStart + segKm });
+  }
+  return result;
+}
+
+function haversineKm(lat1, lng1, lat2, lng2) {
+  const R = 6371;
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLng = ((lng2 - lng1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos((lat1 * Math.PI) / 180) *
+    Math.cos((lat2 * Math.PI) / 180) *
+    Math.sin(dLng / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+// Fetch stations — sequential radius expansion + mirror rotation on 429
+async function fetchNearbyGasStations(lat, lng) {
+  for (const radiusM of [5000, 10000, 15000]) {
+    const query = `[out:json];node["amenity"="fuel"](around:${radiusM},${lat},${lng});out;`;
+
+    for (const endpoint of OVERPASS_ENDPOINTS) {
+      try {
+        const url = `${endpoint}?data=${encodeURIComponent(query)}`;
+        const { data } = await axios.get(url, { timeout: 15000 });
+
+        if (!data.elements || data.elements.length === 0) {
+          // No results at this radius — break out of mirror loop, try wider
+          break;
+        }
+
+        const host = endpoint.split('/')[2];
+        console.log(`  Overpass [${host}]: ${data.elements.length} stations at ${radiusM / 1000}km for (${lat.toFixed(4)}, ${lng.toFixed(4)})`);
+
+        return data.elements.map((el) => ({
+          id: el.id,
+          lat: el.lat,
+          lng: el.lon,
+          name: el.tags?.name || el.tags?.brand || 'Gas Station',
+          brand: el.tags?.brand || null,
+          address: [el.tags?.['addr:housenumber'], el.tags?.['addr:street'], el.tags?.['addr:city']]
+            .filter(Boolean).join(' '),
+        }));
+      } catch (err) {
+        const host = endpoint.split('/')[2];
+        if (err.response?.status === 429) {
+          console.warn(`  Overpass 429 on ${host} — trying next mirror`);
+          await sleep(500);
+        } else {
+          console.error(`  Overpass error on ${host}: ${err.message}`);
+        }
+      }
+    }
+
+    console.warn(`  Overpass: 0 results at ${radiusM / 1000}km — trying wider radius`);
+    await sleep(1000);
+  }
+
+  return [];
+}
+
+function planStopZones(polylinePoints, tankKm, currentFuelPercent, safetyBufferPercent = 15) {
+  const safetyKm = (safetyBufferPercent / 100) * tankKm;
+  const MIN_STOP_DIST_KM = 20;
+  const stopZones = [];
+
+  let fuelKmRemaining = (currentFuelPercent / 100) * tankKm;
+  let lastStopDist = 0;
+  let prevDist = 0;
+
+  for (const pt of polylinePoints) {
+    const distTravelled = pt.distFromStart - prevDist;
+    fuelKmRemaining -= distTravelled;
+    prevDist = pt.distFromStart;
+
+    const distSinceLastStop = pt.distFromStart - lastStopDist;
+
+    if (fuelKmRemaining <= safetyKm && distSinceLastStop >= MIN_STOP_DIST_KM) {
+      stopZones.push({ distFromStart: pt.distFromStart, lat: pt.lat, lng: pt.lng });
+      fuelKmRemaining = tankKm;
+      lastStopDist = pt.distFromStart;
+    }
+  }
+
+  return stopZones;
+}
+
+// ---------------------------------------------------------------------------
+// POST /api/routes/navigate
+// ---------------------------------------------------------------------------
 router.post('/navigate', async (req, res) => {
   try {
     const { origin, destination, travelMode = 'DRIVE' } = req.body;
-
     if (!origin || !destination) {
       return res.status(400).json({ error: 'origin and destination are required' });
     }
-
-    const mode = VALID_MODES.includes(travelMode.toUpperCase())
-      ? travelMode.toUpperCase()
-      : 'DRIVE';
-
+    const mode = VALID_MODES.includes(travelMode.toUpperCase()) ? travelMode.toUpperCase() : 'DRIVE';
     const raw = await fetchRoute(origin, destination, { travelMode: mode });
     const route = parseRoute(raw);
     route.travelMode = mode;
-
     res.json(route);
   } catch (err) {
     console.error('Navigate error:', err.message);
@@ -108,11 +320,12 @@ router.post('/navigate', async (req, res) => {
   }
 });
 
-// POST /api/routes/plan — compare fastest / cheapest / safest (driving only)
+// ---------------------------------------------------------------------------
+// POST /api/routes/plan
+// ---------------------------------------------------------------------------
 router.post('/plan', async (req, res) => {
   try {
     const { origin, destination, fuelType = 'regular', fuelEfficiency = 10 } = req.body;
-
     if (!origin || !destination) {
       return res.status(400).json({ error: 'origin and destination are required' });
     }
@@ -137,13 +350,140 @@ router.post('/plan', async (req, res) => {
       const timeCost = Math.round((duration * 0.35) * 100) / 100;
       const riskCost = Math.round((distance * RISK_FACTOR[routeType]) * 100) / 100;
       const totalCost = Math.round((fuelCost + timeCost + riskCost) * 100) / 100;
-
       return { routeType, distance, duration, fuelCost, timeCost, riskCost, totalCost, description, polyline };
     });
 
     res.json({ gasPrice, routes });
   } catch (err) {
     console.error('Route planning error:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ---------------------------------------------------------------------------
+// POST /api/routes/gas-stops — Tesla-style trip planner
+// ---------------------------------------------------------------------------
+router.post('/gas-stops', async (req, res) => {
+  try {
+    const { origin, destination, tankKm = 500, currentFuelPercent = 100 } = req.body;
+
+    if (!origin || !destination) {
+      return res.status(400).json({ error: 'origin and destination are required' });
+    }
+
+    const raw = await fetchRoute(origin, destination, { travelMode: 'DRIVE' });
+    const { distance, polyline } = parseRoute(raw);
+    const polylinePoints = decodePolylineWithDistance(polyline);
+    const routeTotalKm = polylinePoints[polylinePoints.length - 1].distFromStart;
+
+    console.log('\n========== GAS STOP PLANNER ==========');
+    console.log(`Route:          ${origin}  →  ${destination}`);
+    console.log(`Route distance: ${Math.round(routeTotalKm)} km  (${polylinePoints.length} polyline points)`);
+    console.log(`Tank:           ${tankKm} km total range`);
+    console.log(`Current fuel:   ${currentFuelPercent}%  =  ${Math.round((currentFuelPercent / 100) * tankKm)} km`);
+    console.log(`Safety buffer:  15%  =  ${Math.round(0.15 * tankKm)} km`);
+
+    const stopZones = planStopZones(polylinePoints, tankKm, currentFuelPercent);
+    const lowFuelWarning = stopZones.length > 0 && stopZones[0].distFromStart <= 25;
+
+    console.log(`\nStop zones:     ${stopZones.length}${lowFuelWarning ? '  ⚠️  low fuel at departure' : ''}`);
+    stopZones.forEach((z, i) => {
+      console.log(`  Zone ${i + 1}: ${Math.round(z.distFromStart)} km  (${z.lat.toFixed(4)}, ${z.lng.toFixed(4)})`);
+    });
+
+    if (stopZones.length === 0) {
+      console.log('\nResult: no stops needed');
+      console.log('=======================================\n');
+      return res.json({
+        routeDistanceKm: Math.round(routeTotalKm * 10) / 10,
+        stopsNeeded: 0,
+        canCompleteWithoutStop: true,
+        lowFuelWarning: false,
+        currentRangeKm: Math.round((currentFuelPercent / 100) * tankKm),
+        plannedStops: [],
+      });
+    }
+
+    // Fetch prices first, then stations sequentially to respect Overpass rate limits
+    console.log('\nFetching prices...');
+    const prices = await fetchOntarioPrices();
+
+    console.log('\nFetching stations (sequential to avoid rate limits)...');
+    const stationResultsPerZone = [];
+    for (let i = 0; i < stopZones.length; i++) {
+      if (i > 0) await sleep(1500); // pause between zones
+      stationResultsPerZone.push(await fetchNearbyGasStations(stopZones[i].lat, stopZones[i].lng));
+    }
+
+    console.log('\nCity prices:');
+    for (const [city, price] of Object.entries(prices)) {
+      console.log(`  ${city}: ${price}¢/L`);
+    }
+
+    console.log('\nStations per zone:');
+    stationResultsPerZone.forEach((stations, i) => {
+      console.log(`  Zone ${i + 1}: ${stations.length} stations`);
+      stations.slice(0, 5).forEach(s => console.log(`    - ${s.name}${s.address ? '  |  ' + s.address : ''}`));
+      if (stations.length > 5) console.log(`    ... +${stations.length - 5} more`);
+    });
+
+    // Build planned stops
+    const plannedStops = [];
+    let fuelKmRemaining = (currentFuelPercent / 100) * tankKm;
+    let prevDist = 0;
+
+    for (let i = 0; i < stopZones.length; i++) {
+      const zone = stopZones[i];
+      const stations = stationResultsPerZone[i];
+
+      const stationsWithPrice = stations
+        .map(s => ({
+          ...s,
+          estimatedPriceCentsPerL: estimatePrice(s.lat, s.lng, prices),
+          detourKm: Math.round(haversineKm(zone.lat, zone.lng, s.lat, s.lng) * 10) / 10,
+        }))
+        .sort((a, b) => a.estimatedPriceCentsPerL - b.estimatedPriceCentsPerL);
+
+      fuelKmRemaining -= (zone.distFromStart - prevDist);
+      const fuelPercentOnArrival = Math.max(0, Math.round((fuelKmRemaining / tankKm) * 100));
+      const best = stationsWithPrice[0] || null;
+
+      console.log(`\nStop ${i + 1}: at ${Math.round(zone.distFromStart)} km — arriving with ${fuelPercentOnArrival}% fuel`);
+      console.log(`  Best: ${best ? `${best.name} @ ${best.estimatedPriceCentsPerL}¢/L (+${best.detourKm} km detour)` : 'none found'}`);
+
+      plannedStops.push({
+        stopNumber: i + 1,
+        distFromStartKm: Math.round(zone.distFromStart * 10) / 10,
+        fuelPercentOnArrival,
+        recommendedStation: best,
+        nearbyAlternatives: stationsWithPrice.slice(1, 4),
+        lat: zone.lat,
+        lng: zone.lng,
+      });
+
+      fuelKmRemaining = tankKm;
+      prevDist = zone.distFromStart;
+    }
+
+    const fuelPercentAtDestination = Math.max(
+      0,
+      Math.round(((fuelKmRemaining - (routeTotalKm - prevDist)) / tankKm) * 100)
+    );
+
+    console.log(`\nArriving at destination: ~${fuelPercentAtDestination}% fuel`);
+    console.log('=======================================\n');
+
+    res.json({
+      routeDistanceKm: Math.round(routeTotalKm * 10) / 10,
+      stopsNeeded: plannedStops.length,
+      canCompleteWithoutStop: false,
+      lowFuelWarning,
+      currentRangeKm: Math.round((currentFuelPercent / 100) * tankKm),
+      fuelPercentAtDestination,
+      plannedStops,
+    });
+  } catch (err) {
+    console.error('Gas stops error:', err.message);
     res.status(500).json({ error: err.message });
   }
 });

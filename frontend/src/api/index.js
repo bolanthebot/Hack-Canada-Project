@@ -23,6 +23,7 @@ export const bikeApi = {
 export const routeApi = {
   plan: (data) => api.post('/routes/plan', data),
   navigate: (data) => api.post('/routes/navigate', data),
+  getGasStops: (data) => api.post('/routes/gas-stops', data),
 };
 
 export const dashboardApi = {
