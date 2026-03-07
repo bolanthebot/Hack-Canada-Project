@@ -50,19 +50,18 @@ const CustomTooltip = ({ active, payload, label }) => {
 
 function ChartCard({ title, subtitle, children, wide }) {
   return (
-    <div className={`bg-white border border-gray-100 rounded-[2.5rem] p-10 ${wide ? 'lg:col-span-2' : ''} animate-in fade-in slide-in-from-bottom-8 duration-1000 ease-out shadow-[0_10px_40px_-15px_rgba(0,0,0,0.03)] hover:shadow-[0_25px_70px_-15px_rgba(0,0,0,0.08)] transition-all group`}>
-      <div className="flex items-center justify-between mb-12">
+    <div className={`bg-white border border-gray-100/80 rounded-[2rem] p-8 ${wide ? 'lg:col-span-2' : ''} animate-in fade-in slide-in-from-bottom-8 duration-1000 ease-out shadow-[0_8px_30px_rgba(0,0,0,0.02)] hover:shadow-[0_20px_50px_rgba(0,0,0,0.06)] transition-all group`}>
+      <div className="flex items-center justify-between mb-10">
         <div>
-          <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.4em] mb-2">{title}</h3>
-          <p className="text-[11px] font-bold text-gray-300 tracking-tight">{subtitle || 'Regional Data Points'}</p>
+          <h3 className="text-[9px] font-black text-gray-400 uppercase tracking-[0.4em] mb-1.5">{title}</h3>
+          <p className="text-[10px] font-bold text-gray-300 tracking-tight">{subtitle || 'Regional Data Points'}</p>
         </div>
-        <div className="flex gap-1.5 opacity-20 group-hover:opacity-100 transition-opacity duration-700">
-          <div className="w-1.5 h-1.5 rounded-full bg-blue-500"></div>
-          <div className="w-1.5 h-1.5 rounded-full bg-emerald-500"></div>
-          <div className="w-1.5 h-1.5 rounded-full bg-rose-500"></div>
+        <div className="flex gap-1 opacity-10 group-hover:opacity-100 transition-opacity duration-700">
+          <div className="w-1 h-1 rounded-full bg-blue-500"></div>
+          <div className="w-1 h-1 rounded-full bg-emerald-500"></div>
         </div>
       </div>
-      <div style={{ width: '100%', height: 320 }}>
+      <div style={{ width: '100%', height: 240 }}>
         <ResponsiveContainer>{children}</ResponsiveContainer>
       </div>
     </div>

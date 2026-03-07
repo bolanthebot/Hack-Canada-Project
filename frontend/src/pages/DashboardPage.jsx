@@ -42,33 +42,29 @@ export default function DashboardPage() {
     <div className="p-8 lg:p-16">
       <div className="max-w-[1600px] mx-auto">
         {/* Header Section */}
-        <div className="mb-16 flex flex-col xl:flex-row xl:items-end justify-between gap-10 animate-in fade-in slide-in-from-top-8 duration-1000 ease-out">
+        <div className="mb-12 flex flex-col xl:flex-row xl:items-end justify-between gap-8 animate-in fade-in slide-in-from-top-6 duration-1000 ease-out">
           <div>
-            <div className="inline-flex items-center gap-2.5 px-4 py-2 rounded-2xl bg-white border border-gray-100 mb-6 shadow-sm group cursor-default">
-              <span className="relative flex h-2 w-2">
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-blue-50/50 border border-blue-100/50 mb-4 shadow-sm group cursor-default">
+              <span className="relative flex h-1.5 w-1.5">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-600"></span>
+                <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-blue-600"></span>
               </span>
-              <span className="text-[10px] font-black text-blue-600 uppercase tracking-[0.3em]">Network Intelligence Live</span>
+              <span className="text-[9px] font-black text-blue-600/80 uppercase tracking-[0.2em]">Network Intelligence Live</span>
             </div>
-            <h1 className="text-6xl font-black text-gray-900 tracking-tighter leading-tight mb-4">
+            <h1 className="text-4xl font-black text-gray-900 tracking-tight leading-none mb-3">
               Urban Intelligence Hub
             </h1>
-            <p className="text-lg font-bold text-gray-400 max-w-3xl leading-relaxed">
-              Real-time mobility insights and safety metrics aggregated across the <span className="text-gray-900 underline decoration-blue-500/20 underline-offset-8">Greater Toronto Area</span> via distributed sensor networks.
+            <p className="text-sm font-semibold text-gray-400 max-w-2xl leading-relaxed">
+              Real-time mobility insights and safety metrics aggregated across the <span className="text-gray-900 underline decoration-blue-500/10 underline-offset-4">Greater Toronto Area</span> via distributed sensor networks.
             </p>
           </div>
 
-          <div className="flex items-center gap-8">
-            <div className="text-right hidden xl:block border-l border-gray-100 pl-10">
-              <div className="text-[9px] font-black text-gray-300 uppercase tracking-[0.4em] mb-2">Protocol Health</div>
-              <div className="text-xs font-black text-emerald-500 tabular-nums">99.9% Uptime</div>
-            </div>
-            <div className="text-right border-l border-gray-100 pl-10">
-              <div className="text-[9px] font-black text-gray-300 uppercase tracking-[0.4em] mb-2">Data Synchronicity</div>
-              <div className="text-xs font-bold text-gray-600 bg-white px-5 py-2.5 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-3">
-                <div className="w-1.5 h-1.5 rounded-full bg-emerald-500"></div>
-                {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} Freshness
+          <div className="flex items-center gap-6">
+            <div className="text-right border-l border-gray-100 pl-8">
+              <div className="text-[8px] font-black text-gray-300 uppercase tracking-[0.3em] mb-1.5">Data Synchronicity</div>
+              <div className="text-[10px] font-bold text-gray-500 bg-white px-4 py-2 rounded-xl border border-gray-100 shadow-sm flex items-center gap-2.5">
+                <div className="w-1 h-1 rounded-full bg-emerald-500"></div>
+                {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
               </div>
             </div>
           </div>
