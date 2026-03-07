@@ -1,3 +1,5 @@
+import CarbonComparison from './CarbonComparison';
+import MarketIntelligence from './MarketIntelligence';
 import { useState } from 'react';
 import { routeApi } from '../../api';
 import toast from 'react-hot-toast';
