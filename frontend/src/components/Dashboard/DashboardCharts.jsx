@@ -29,9 +29,16 @@ const tt = {
 
 function ChartCard({ title, children, wide }) {
   return (
-    <div className={`nav-card !bg-white border-gray-100 p-8 ${wide ? 'lg:col-span-2' : ''} animate-in fade-in slide-in-from-bottom-2 duration-500 shadow-sm hover:shadow-md transition-shadow`}>
-      <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-8">{title}</h3>
-      <div style={{ width: '100%', height: 280 }}>
+    <div className={`bg-white border border-gray-100 rounded-[2rem] p-10 ${wide ? 'lg:col-span-2' : ''} animate-in fade-in slide-in-from-bottom-4 duration-1000 shadow-[0_10px_40px_-15px_rgba(0,0,0,0.03)] hover:shadow-[0_20px_60px_-15px_rgba(0,0,0,0.06)] transition-all ease-out group`}>
+      <div className="flex items-center justify-between mb-10">
+        <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.3em]">{title}</h3>
+        <div className="flex gap-1">
+          <div className="w-1.5 h-1.5 rounded-full bg-gray-100"></div>
+          <div className="w-1.5 h-1.5 rounded-full bg-gray-100"></div>
+          <div className="w-1.5 h-1.5 rounded-full bg-gray-100"></div>
+        </div>
+      </div>
+      <div style={{ width: '100%', height: 300 }}>
         <ResponsiveContainer>{children}</ResponsiveContainer>
       </div>
     </div>

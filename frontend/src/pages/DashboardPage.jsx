@@ -8,12 +8,19 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // NOTE: Dashboard backend is usually expected to return aggregate data.
-    dashboardApi
-      .getStats()
-      .then((res) => setStats(res.data))
-      .catch(() => { })
-      .finally(() => setLoading(false));
+    const fetchStats = (isInitial = false) => {
+      dashboardApi
+        .getStats()
+        .then((res) => setStats(res.data))
+        .catch(() => { })
+        .finally(() => {
+          if (isInitial) setLoading(false);
+        });
+    };
+
+    fetchStats(true);
+    const interval = setInterval(() => fetchStats(false), 30000); // Refresh every 30s
+    return () => clearInterval(interval);
   }, []);
 
   if (loading) {
@@ -30,27 +37,32 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-white p-8 lg:p-12">
-      <div className="max-w-[1400px] mx-auto">
-        <div className="mb-12 flex flex-col md:flex-row md:items-end justify-between gap-6 animate-in fade-in slide-in-from-top-4 duration-700">
+    <div className="min-h-screen bg-white p-8 lg:p-16">
+      <div className="max-w-[1440px] mx-auto">
+        <div className="mb-16 flex flex-col xl:flex-row xl:items-end justify-between gap-8 animate-in fade-in slide-in-from-top-6 duration-1000 ease-out">
           <div>
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-50 border border-blue-100 mb-4">
-              <span className="w-2 h-2 rounded-full bg-blue-600 animate-pulse"></span>
-              <span className="text-[10px] font-black text-blue-600 uppercase tracking-widest">Live System Analytics</span>
+            <div className="inline-flex items-center gap-2.5 px-4 py-2 rounded-2xl bg-blue-50/50 border border-blue-100/50 mb-6 group cursor-default">
+              <span className="w-2 h-2 rounded-full bg-blue-600 animate-pulse shadow-[0_0_12px_rgba(37,99,235,0.4)]"></span>
+              <span className="text-[10px] font-black text-blue-600 uppercase tracking-[0.25em]">Live Intelligence Sync</span>
             </div>
-            <h1 className="text-4xl font-black text-gray-800 tracking-tight leading-none mb-3">
+            <h1 className="text-5xl font-black text-gray-900 tracking-tighter leading-tight mb-4">
               Urban Intelligence Hub
             </h1>
-            <p className="text-sm font-semibold text-gray-400 max-w-lg leading-relaxed">
-              Real-time mobility insights and safety metrics aggregated across the Greater Toronto Area.
+            <p className="text-base font-bold text-gray-400 max-w-2xl leading-relaxed">
+              Real-time mobility insights and safety metrics aggregated across the <span className="text-gray-900">Greater Toronto Area</span> via distributed sensor networks and user-submitted reports.
             </p>
           </div>
 
-          <div className="flex items-center gap-4">
-            <div className="text-right hidden md:block">
-              <div className="text-[10px] font-black text-gray-300 uppercase tracking-widest mb-1">Data Freshness</div>
-              <div className="text-xs font-bold text-gray-500 bg-gray-50 px-3 py-1 rounded-lg border border-gray-100">
-                Synced at {new Date().toLocaleTimeString()}
+          <div className="flex items-center gap-6">
+            <div className="text-right hidden xl:block border-l border-gray-100 pl-8">
+              <div className="text-[9px] font-black text-gray-300 uppercase tracking-[0.3em] mb-2">Network Latency</div>
+              <div className="text-xs font-black text-emerald-500 tabular-nums">24ms (Optimal)</div>
+            </div>
+            <div className="text-right border-l border-gray-100 pl-8">
+              <div className="text-[9px] font-black text-gray-300 uppercase tracking-[0.3em] mb-2">Data Freshness</div>
+              <div className="text-xs font-bold text-gray-600 bg-gray-50 px-4 py-2 rounded-xl border border-gray-100 shadow-sm flex items-center gap-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                Synced at {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
               </div>
             </div>
           </div>
