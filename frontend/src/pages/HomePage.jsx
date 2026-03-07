@@ -20,17 +20,26 @@ export default function HomePage() {
   const [bikeMinScore, setBikeMinScore] = useState(0);
   const [route, setRoute] = useState(null);
   const [userLocation, setUserLocation] = useState(null);
+  const [mapCenter, setMapCenter] = useState(null);
+  const [hasCentered, setHasCentered] = useState(false);
   const [travelMode, setTravelMode] = useState('DRIVE'); // DRIVE or BICYCLE
   const [loadingRoute, setLoadingRoute] = useState(false);
 
   useEffect(() => {
     if (!navigator.geolocation) return;
     navigator.geolocation.getCurrentPosition(
-      (pos) => setUserLocation([pos.coords.latitude, pos.coords.longitude]),
+      (pos) => {
+        const coords = [pos.coords.latitude, pos.coords.longitude];
+        setUserLocation(coords);
+        if (!hasCentered) {
+          setMapCenter(coords);
+          setHasCentered(true);
+        }
+      },
       () => { },
       { enableHighAccuracy: true, timeout: 8000 },
     );
-  }, []);
+  }, [hasCentered]);
 
   const loadIntersections = useCallback(async () => {
     try {
@@ -94,7 +103,7 @@ export default function HomePage() {
     <div className="relative w-full h-screen overflow-hidden bg-white">
       {/* Background Map */}
       <div className="absolute inset-0 z-0">
-        <MapContainer center={userLocation} userLocation={userLocation} onMapClick={handleMapClick}>
+        <MapContainer center={mapCenter} userLocation={userLocation} onMapClick={handleMapClick}>
           <ReportModal onReported={loadIntersections} />
 
           {activeLayers.includes('intersections') && (
@@ -145,10 +154,24 @@ export default function HomePage() {
             </button>
           </div>
 
-          <div className="px-4 py-2 bg-white/80 backdrop-blur border border-gray-100 rounded-full shadow-sm">
-            <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest leading-none">
-              {loadingRoute ? 'Calculating...' : 'Tap map for destination'}
-            </span>
+          <div className="flex gap-2">
+            <div className="px-4 py-2 bg-white/80 backdrop-blur border border-gray-100 rounded-full shadow-sm">
+              <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest leading-none">
+                {loadingRoute ? 'Calculating...' : 'Tap map for destination'}
+              </span>
+            </div>
+
+            {userLocation && (
+              <button
+                onClick={() => setMapCenter([...userLocation])}
+                className="p-2.5 rounded-full bg-white border border-gray-100 shadow-sm text-blue-600 hover:bg-blue-50 transition-colors group"
+                title="Recenter Map"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="group-active:scale-90 transition-transform">
+                  <path d="M12 2v4M12 18v4M4 12H0M24 12h-4M12 12m-6 0a6 6 0 1 0 12 0a6 6 0 1 0 -12 0" />
+                </svg>
+              </button>
+            )}
           </div>
         </div>
       </div>
