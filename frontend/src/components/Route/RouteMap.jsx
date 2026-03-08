@@ -85,7 +85,7 @@ export default function RouteMap({ routes = [], activeRoute, gasStops = null, ga
   const plannedStops = gasStops?.plannedStops || [];
 
   return (
-    <div className="relative rounded-xl overflow-hidden border border-white/[0.05]" style={{ height: 400 }}>
+    <div className="relative rounded-xl overflow-hidden border border-white/[0.05] h-[300px] sm:h-[400px]">
       <LeafletMap
         center={[43.6532, -79.3832]}
         zoom={11}
@@ -202,8 +202,8 @@ export default function RouteMap({ routes = [], activeRoute, gasStops = null, ga
 
       {/* Legend */}
       {decoded.length > 0 && (
-        <div className="absolute bottom-3 left-3 z-[1000] flex items-center gap-2 flex-wrap">
-          <div className="bg-[#0d1017]/95 backdrop-blur border border-white/[0.06] rounded-lg px-3 py-2 flex items-center gap-3">
+        <div className="absolute bottom-3 left-3 right-3 sm:right-auto z-[1000] flex items-center gap-2 flex-wrap">
+          <div className="bg-[#0d1017]/95 backdrop-blur border border-white/[0.06] rounded-lg px-3 py-2 flex items-center gap-3 flex-wrap">
             {decoded.map((r) => (
               <div key={r.routeType} className="flex items-center gap-1.5">
                 <span className="w-2 h-2 rounded-full" style={{ background: ROUTE_COLORS[r.routeType] }} />
@@ -225,7 +225,7 @@ export default function RouteMap({ routes = [], activeRoute, gasStops = null, ga
 
       {/* Gas loading indicator */}
       {gasLoading && (
-        <div className="absolute top-3 right-12 z-[1000] bg-[#0d1017]/95 backdrop-blur border border-teal-500/20 rounded-full px-3 py-1.5 flex items-center gap-2">
+        <div className="absolute top-3 right-3 sm:right-12 z-[1000] bg-[#0d1017]/95 backdrop-blur border border-teal-500/20 rounded-full px-3 py-1.5 flex items-center gap-2">
           <span className="w-1.5 h-1.5 rounded-full bg-teal-400 animate-pulse" />
           <span className="text-[11px] text-teal-400 font-mono">planning stops…</span>
         </div>

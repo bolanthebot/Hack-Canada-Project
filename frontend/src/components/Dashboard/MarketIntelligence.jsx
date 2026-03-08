@@ -123,7 +123,7 @@ export default function MarketIntelligence({ autoLoad = false }) {
     return (
         <div style={S.wrap}>
             {/* Header */}
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 14 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 10, flexWrap: "wrap", marginBottom: 14 }}>
                 <div>
                     <div style={{ fontSize: 13, fontWeight: 700, letterSpacing: "0.05em", marginBottom: 2 }}>
                         ⚡ FUEL MARKET INTELLIGENCE
@@ -161,6 +161,8 @@ export default function MarketIntelligence({ autoLoad = false }) {
             {!isAuthenticated && (
                 <div style={{
                     display: "flex",
+                    flexWrap: "wrap",
+                    gap: 10,
                     alignItems: "center",
                     justifyContent: "space-between",
                     marginBottom: 14,
@@ -170,7 +172,7 @@ export default function MarketIntelligence({ autoLoad = false }) {
                     padding: "12px 18px",
                     boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)"
                 }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 12, minWidth: 0 }}>
                         <span style={{ fontSize: 18 }}>🔒</span>
                         <div>
                             <p style={{ fontSize: 12, fontWeight: 600, color: "#e2e8f0", margin: "0 0 2px 0", letterSpacing: "0.02em" }}>
@@ -223,15 +225,15 @@ export default function MarketIntelligence({ autoLoad = false }) {
             {intel && !loading && (
                 <>
                     {/* Price + recommendation row */}
-                    <div style={{ display: "flex", gap: 10, marginBottom: 14 }}>
-                        <div style={{ background: "#111827", border: "1px solid #1e2530", borderRadius: 6, padding: "12px 16px", flex: 1 }}>
+                    <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 14 }}>
+                        <div style={{ background: "#111827", border: "1px solid #1e2530", borderRadius: 6, padding: "12px 16px", flex: "1 1 220px" }}>
                             <div style={S.label}>Current price</div>
                             <div style={{ fontSize: 22, fontWeight: 700 }}>{intel.currentPriceCents}¢</div>
                             <div style={{ fontSize: 11, color: outlookColor, marginTop: 2 }}>
                                 {outlookArrow} {intel.priceOutlook}
                             </div>
                         </div>
-                        <div style={{ background: "#111827", border: "1px solid #1e2530", borderRadius: 6, padding: "12px 16px", flex: 1 }}>
+                        <div style={{ background: "#111827", border: "1px solid #1e2530", borderRadius: 6, padding: "12px 16px", flex: "1 1 220px" }}>
                             <div style={S.label}>4-week forecast</div>
                             <div style={{ fontSize: 22, fontWeight: 700, color: outlookColor }}>
                                 {intel.predictedRangeLow}–{intel.predictedRangeHigh}¢
@@ -303,8 +305,8 @@ export default function MarketIntelligence({ autoLoad = false }) {
                         <>
                             <div style={S.divider} />
                             <div style={S.label}>Statistical forecast ({forecast.dataPointsUsed} data points, {forecast.dataFrom?.slice(0, 4)}–{forecast.dataTo?.slice(0, 4)})</div>
-                            <div style={{ display: "flex", gap: 10, marginBottom: 10 }}>
-                                <div style={{ flex: 1 }}>
+                            <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 10 }}>
+                                <div style={{ flex: "1 1 220px" }}>
                                     <div style={S.stat}>
                                         <span style={S.statLabel}>Seasonal delta</span>
                                         <span style={{ color: forecast.forecast.seasonalDeltaCents > 0 ? "#f87171" : "#14b8a6", fontWeight: 600 }}>
@@ -324,7 +326,7 @@ export default function MarketIntelligence({ autoLoad = false }) {
                                         </span>
                                     </div>
                                 </div>
-                                <div style={{ flex: 1 }}>
+                                <div style={{ flex: "1 1 220px" }}>
                                     <div style={S.stat}>
                                         <span style={S.statLabel}>Cheapest month</span>
                                         <span style={{ color: "#14b8a6", fontWeight: 600 }}>{forecast.seasonal.cheapestMonth} ({forecast.seasonal.cheapestMonthAvg}¢)</span>

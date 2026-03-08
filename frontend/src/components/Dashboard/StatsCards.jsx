@@ -25,13 +25,13 @@ export default function StatsCards({ stats }) {
   ];
 
   return (
-    <div className="grid grid-cols-4 gap-px bg-white/[0.04] rounded-lg overflow-hidden">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-px bg-white/[0.04] rounded-lg overflow-hidden">
       {items.map((item, i) => (
-        <div key={i} className="bg-[#0c0f14] p-5">
-          <div className="text-[28px] font-semibold text-gray-100 tabular-nums leading-none mb-1.5">
+        <div key={i} className="bg-[#0c0f14] p-4 sm:p-5">
+          <div className="text-2xl sm:text-[28px] font-semibold text-gray-100 tabular-nums leading-none mb-1.5">
             {item.value}
           </div>
-          <div className="text-[13px] text-gray-400">{item.label}</div>
+          <div className="text-[13px] text-gray-400 leading-snug">{item.label}</div>
           <div className="text-[11px] text-gray-600 mt-0.5">{item.sub}</div>
         </div>
       ))}

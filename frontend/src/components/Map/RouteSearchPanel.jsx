@@ -9,7 +9,7 @@ const MODES = [
 ];
 
 const inputCls =
-  'w-full bg-white/[0.06] border border-white/[0.08] rounded px-2.5 py-1.5 text-[12px] text-gray-200 focus:outline-none focus:border-teal-500/50 placeholder:text-gray-600';
+  'w-full bg-white/[0.06] border border-white/[0.08] rounded px-2.5 py-2 text-[12px] text-gray-200 focus:outline-none focus:border-teal-500/50 placeholder:text-gray-600';
 
 export default function RouteSearchPanel({ userLocation, clickedDest, route, onRouteFound, onRouteClear }) {
   const [origin, setOrigin] = useState('');
@@ -114,7 +114,7 @@ export default function RouteSearchPanel({ userLocation, clickedDest, route, onR
             <button
               onClick={handleUseMyLocation}
               title="Use my location"
-              className={`shrink-0 w-[30px] flex items-center justify-center rounded border transition-colors ${
+              className={`shrink-0 w-9 flex items-center justify-center rounded border transition-colors ${
                 useMyLocation
                   ? 'bg-teal-600/30 border-teal-500/50 text-teal-400'
                   : 'bg-white/[0.06] border-white/[0.08] text-gray-500 hover:text-gray-300 hover:border-white/[0.15]'
@@ -144,7 +144,7 @@ export default function RouteSearchPanel({ userLocation, clickedDest, route, onR
           <button
             key={m.id}
             onClick={() => setTravelMode(m.id)}
-            className={`flex-1 text-[11px] font-medium py-1.5 rounded transition-colors ${
+            className={`flex-1 text-[11px] font-medium py-2 rounded transition-colors ${
               travelMode === m.id
                 ? 'bg-teal-600 text-white'
                 : 'bg-white/[0.05] text-gray-400 hover:text-gray-200 hover:bg-white/[0.08]'

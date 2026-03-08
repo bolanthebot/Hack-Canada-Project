@@ -103,10 +103,10 @@ export default function RoutePlanner() {
   };
 
   return (
-    <div className="min-h-screen bg-[#080a0f] p-6 lg:p-10">
+    <div className="min-h-screen bg-[#080a0f] p-4 sm:p-6 lg:p-10">
       {/* Page header */}
       <div className="max-w-[1200px] mx-auto mb-8">
-        <div className="flex items-end justify-between">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <div className="text-[10px] uppercase tracking-[0.2em] text-teal-500 font-semibold mb-2">
               Navigation
@@ -150,7 +150,7 @@ export default function RoutePlanner() {
                 />
               </Field>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <Field label="Fuel">
                   <select value={fuelType} onChange={(e) => setFuelType(e.target.value)} className={inputCls}>
                     <option value="regular">Regular</option>

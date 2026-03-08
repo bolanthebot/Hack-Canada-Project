@@ -73,8 +73,8 @@ function StopCard({ stop, isLast }) {
         {/* Content */}
         <div className="flex-1 pb-6">
           {/* Header */}
-          <div className="flex items-baseline justify-between mb-3">
-            <div>
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-baseline sm:justify-between mb-3">
+            <div className="min-w-0">
               <span className="text-[12px] font-semibold text-gray-300">
                 Stop {stop.stopNumber}
               </span>
@@ -82,7 +82,7 @@ function StopCard({ stop, isLast }) {
                 at {stop.distFromStartKm} km
               </span>
             </div>
-            <div className="text-right">
+            <div className="text-left sm:text-right">
               <div className="text-[10px] text-gray-600 mb-1">fuel on arrival</div>
               <FuelBar percent={stop.fuelPercentOnArrival} />
             </div>
@@ -91,20 +91,20 @@ function StopCard({ stop, isLast }) {
           {/* Recommended station */}
           {rec ? (
             <div className="bg-emerald-500/[0.05] border border-emerald-500/20 rounded-xl p-3.5 mb-2">
-              <div className="flex items-start justify-between gap-2">
-                <div className="flex items-center gap-2.5">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                <div className="flex items-center gap-2.5 min-w-0">
                   <div className="w-7 h-7 rounded-lg bg-emerald-500/20 flex items-center justify-center text-sm flex-shrink-0">
                     ★
                   </div>
-                  <div>
-                    <div className="text-[13px] font-semibold text-gray-200">{rec.name}</div>
+                  <div className="min-w-0">
+                    <div className="text-[13px] font-semibold text-gray-200 truncate">{rec.name}</div>
                     {rec.address && (
-                      <div className="text-[11px] text-gray-600 mt-0.5">{rec.address}</div>
+                      <div className="text-[11px] text-gray-600 mt-0.5 break-words">{rec.address}</div>
                     )}
                     <div className="text-[11px] text-gray-600 mt-0.5">+{rec.detourKm} km detour</div>
                   </div>
                 </div>
-                <div className="text-right flex-shrink-0">
+                <div className="text-left sm:text-right flex-shrink-0">
                   <div className="text-[15px] font-bold text-emerald-400 tabular-nums">
                     {rec.estimatedPriceCentsPerL}¢/L
                   </div>
@@ -182,7 +182,7 @@ function TripPlannerSection({ gasStops, gasLoading }) {
       {!gasLoading && gasStops && !gasStops.canCompleteWithoutStop && (
         <>
           {/* Route summary bar */}
-          <div className="flex items-center gap-2 mb-5 px-1">
+          <div className="flex items-center gap-2 mb-5 px-1 overflow-x-auto pb-1">
             <div className="flex items-center gap-1.5">
               <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
               <span className="text-[11px] text-gray-500 font-mono">Origin</span>
@@ -274,7 +274,7 @@ export default function RouteResults({ result, activeRoute, onRouteHover, gasSto
         </div>
 
         {/* Route cards */}
-        <div className="xl:col-span-3 grid grid-cols-3 gap-3">
+        <div className="xl:col-span-3 grid grid-cols-1 md:grid-cols-3 gap-3">
           {routes.map((route) => {
             const meta = ROUTE_META[route.routeType];
             const isActive = activeRoute === route.routeType;

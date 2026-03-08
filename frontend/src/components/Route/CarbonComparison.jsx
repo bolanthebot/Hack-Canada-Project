@@ -262,7 +262,7 @@ export default function CarbonComparison({ defaultOrigin = "", defaultDestinatio
                         padding: "12px 16px",
                         marginTop: 10,
                         display: "grid",
-                        gridTemplateColumns: "1fr 1fr",
+                        gridTemplateColumns: "repeat(auto-fit, minmax(110px, 1fr))",
                         gap: 12,
                         border: "1px solid #1e2530",
                     }}>

@@ -143,14 +143,14 @@ export default function Sidebar({ collapsed, onToggle }) {
         </div>
       </aside>
 
-      <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-[#10131a]/95 backdrop-blur border-t border-white/[0.08]">
-        <div className="grid grid-cols-3">
+      <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-[#10131a]/95 backdrop-blur border-t border-white/[0.08] pb-[max(env(safe-area-inset-bottom),0.4rem)]">
+        <div className="grid grid-cols-4">
           {navItems.map((item) => (
             <NavLink
               key={item.to}
               to={item.to}
               className={({ isActive }) =>
-                `flex flex-col items-center justify-center gap-1 py-2 text-[11px] transition-colors ${
+                `flex flex-col items-center justify-center gap-1 py-2.5 text-[11px] transition-colors ${
                   isActive ? 'text-teal-400' : 'text-gray-500'
                 }`
               }
