@@ -1,6 +1,7 @@
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell,
 } from 'recharts';
+import { useNavigate } from 'react-router-dom';
 
 const ROUTE_META = {
   fastest: { label: 'Fastest', color: '#60a5fa', fallbackDesc: 'Shortest travel time' },
@@ -234,6 +235,7 @@ function TripPlannerSection({ gasStops, gasLoading }) {
 // ── Main ─────────────────────────────────────────────────────────────────────
 
 export default function RouteResults({ result, activeRoute, onRouteHover, gasStops, gasLoading }) {
+  const navigate = useNavigate();
   const { gasPrice, routes } = result;
 
   const chartData = routes.map((r) => ({
@@ -313,6 +315,20 @@ export default function RouteResults({ result, activeRoute, onRouteHover, gasSto
                   <StatRow label="Time cost" value={`$${route.timeCost.toFixed(2)}`} muted />
                   <StatRow label="Risk" value={`$${route.riskCost.toFixed(2)}`} muted />
                 </div>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    navigate('/', { state: { importedRoute: route } });
+                  }}
+                  className={`w-full mt-4 py-2 rounded-lg text-[11px] font-bold tracking-wide transition-colors ${
+                    isActive
+                      ? 'bg-white/[0.1] text-white hover:bg-white/[0.15]'
+                      : 'bg-white/[0.05] text-gray-400 hover:bg-white/[0.08] hover:text-gray-300'
+                  }`}
+                  style={{ backgroundColor: isActive ? `${meta.color}20` : undefined, color: isActive ? meta.color : undefined }}
+                >
+                  Send to map
+                </button>
               </div>
             );
           })}

@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import MapContainer from '../components/Map/MapContainer';
 import LayerControl from '../components/Map/LayerControl';
 import HeatmapLayer from '../components/Map/HeatmapLayer';
@@ -12,6 +13,8 @@ import RouteLayer from '../components/Map/RouteLayer';
 import { intersectionApi, parkingApi, bikeApi } from '../api';
 
 export default function HomePage() {
+  const location = useLocation();
+  const navigate = useNavigate();
   const [activeLayers, setActiveLayers] = useState(['intersections','heatmap']);
   const [intersections, setIntersections] = useState([]);
   const [hotspots, setHotspots] = useState([]);
@@ -21,6 +24,13 @@ export default function HomePage() {
   const [route, setRoute] = useState(null);
   const [userLocation, setUserLocation] = useState(null);
   const [clickedDest, setClickedDest] = useState(null);
+
+  useEffect(() => {
+    if (location.state?.importedRoute) {
+      setRoute(location.state.importedRoute);
+      navigate('.', { replace: true, state: {} });
+    }
+  }, [location.state, navigate]);
 
   useEffect(() => {
     if (!navigator.geolocation) return;
@@ -103,6 +113,7 @@ export default function HomePage() {
       <RouteSearchPanel
         userLocation={userLocation}
         clickedDest={clickedDest}
+        route={route}
         onRouteFound={setRoute}
         onRouteClear={() => setRoute(null)}
       />
