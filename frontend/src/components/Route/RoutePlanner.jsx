@@ -1,3 +1,5 @@
+import CarbonComparison from './CarbonComparison';
+import MarketIntelligence from './MarketIntelligence';
 import { useState } from 'react';
 import { routeApi } from '../../api';
 import toast from 'react-hot-toast';
@@ -102,7 +104,7 @@ export default function RoutePlanner() {
   };
 
   return (
-    <div className="min-h-screen bg-[#080a0f] p-4 sm:p-6 lg:p-10">
+    <div className="min-h-screen bg-[#080a0f] p-6 lg:p-10">
       {/* Page header */}
       <div className="max-w-[1200px] mx-auto mb-8">
         <div className="flex items-end justify-between">
@@ -112,7 +114,7 @@ export default function RoutePlanner() {
             </div>
             <h1 className="text-2xl font-bold text-white tracking-tight">Route Planner</h1>
             <p className="text-[13px] text-gray-500 mt-1">
-              Speed · Cost · Safety — powered by Google Maps
+              Speed / Cost / Safety
             </p>
           </div>
           <div className="hidden lg:flex items-center gap-5 text-[11px] text-gray-600 font-mono">
@@ -128,7 +130,7 @@ export default function RoutePlanner() {
 
         {/* Sidebar */}
         <div className="lg:col-span-3">
-          <div className="bg-[#0d1017] border border-white/[0.05] rounded-xl overflow-hidden sticky top-6">
+          <div className="bg-[#0d1017] border border-white/[0.05] rounded-xl overflow-hidden top-6">
             {/* Form */}
             <form onSubmit={handleSubmit} className="px-5 py-5 space-y-5">
               <Field label="Origin">
@@ -221,6 +223,18 @@ export default function RoutePlanner() {
               </button>
             </form>
           </div>
+          {/* Carbon Cost Navigator */}
+          <div className="px-5 py-5 border-t border-white/[0.04]">
+            <CarbonComparison
+              defaultOrigin={origin}
+              defaultDestination={destination}
+            />
+          </div>
+
+          {/* Market Intelligence */}
+          <div className="px-5 py-5 border-t border-white/[0.04]">
+            <MarketIntelligence autoLoad={false} />
+          </div>
         </div>
 
         {/* Main content */}
@@ -228,7 +242,7 @@ export default function RoutePlanner() {
           <RouteMap
             routes={result?.routes || []}
             activeRoute={activeRoute}
-            gasStops={gasStops}
+            gasStops={gasStops?.stations || []}
             gasLoading={gasLoading}
           />
 
