@@ -18,7 +18,7 @@ export default function DashboardPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen p-8 flex items-center justify-center">
+      <div className="min-h-screen p-4 sm:p-6 lg:p-8 flex items-center justify-center">
         <div className="flex items-center gap-2 text-gray-500 text-sm">
           <div className="w-4 h-4 border-2 border-gray-600 border-t-gray-300 rounded-full animate-spin" />
           Loading...
@@ -28,7 +28,7 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen p-8">
+    <div className="min-h-screen p-4 sm:p-6 lg:p-8">
       <div className="max-w-[1100px] mx-auto">
         <div className="mb-8">
           <h1 className="text-xl font-semibold text-gray-100 mb-1">GTA Mobility Overview</h1>

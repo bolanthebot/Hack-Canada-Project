@@ -28,7 +28,7 @@ export default function MapContainer({ children, center, userLocation, onMapClic
       zoom={13}
       zoomControl={false}
       className={`w-full h-full ${className}`}
-      style={{ minHeight: '100vh' }}
+      style={{ minHeight: '100dvh' }}
     >
       <ZoomControl position="bottomright" />
       <TileLayer

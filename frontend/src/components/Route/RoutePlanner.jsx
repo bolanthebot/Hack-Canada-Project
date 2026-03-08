@@ -108,7 +108,7 @@ export default function RoutePlanner() {
   };
 
   return (
-    <div className="min-h-screen bg-[#080a0f] p-6 lg:p-10">
+    <div className="min-h-screen bg-[#080a0f] p-4 sm:p-6 lg:p-10">
       {/* Page header */}
       <div className="max-w-[1200px] mx-auto mb-8">
         <div className="flex items-end justify-between">
