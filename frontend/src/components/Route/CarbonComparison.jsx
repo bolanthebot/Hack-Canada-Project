@@ -1,6 +1,5 @@
 import { useState } from "react";
-
-const API_BASE = "http://localhost:5000/api";
+import { routeApi } from "../../api";
 
 // Minimal inline styles matching the app's dark theme
 const S = {
@@ -97,12 +96,8 @@ export default function CarbonComparison({ defaultOrigin = "", defaultDestinatio
         setError(null);
         setResult(null);
         try {
-            const res = await fetch(`${API_BASE}/routes/compare`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ origin, destination }),
-            });
-            const data = await res.json();
+            const res = await routeApi.compare({ origin, destination });
+            const data = res.data;
             if (data.error) throw new Error(data.error);
             setResult(data);
         } catch (e) {

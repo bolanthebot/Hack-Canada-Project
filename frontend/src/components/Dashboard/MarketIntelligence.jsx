@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { useAuth0 } from '@auth0/auth0-react';
-
-const API_BASE = "http://localhost:5000/api";
+import { routeApi } from "../../api";
 
 const S = {
     wrap: {
@@ -95,18 +94,11 @@ export default function MarketIntelligence({ autoLoad = false }) {
         setError(null);
         try {
             const [intelRes, forecastRes] = await Promise.all([
-                fetch(`${API_BASE}/routes/market-intelligence`, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ city: "Ontario" }),
-                }),
-                fetch(`${API_BASE}/routes/price-forecast`, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ city: "toronto" }),
-                }),
+                routeApi.marketIntelligence({ city: "Ontario" }),
+                routeApi.priceForecast({ city: "toronto" }),
             ]);
-            const [intelData, forecastData] = await Promise.all([intelRes.json(), forecastRes.json()]);
+            const intelData = intelRes.data;
+            const forecastData = forecastRes.data;
             if (intelData.error && !intelData.fallback) throw new Error(intelData.error);
             setIntel(intelData);
             setForecast(forecastData);
