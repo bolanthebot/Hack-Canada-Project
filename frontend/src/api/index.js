@@ -24,6 +24,9 @@ export const routeApi = {
   plan: (data) => api.post('/routes/plan', data),
   navigate: (data) => api.post('/routes/navigate', data),
   getGasStops: (data) => api.post('/routes/gas-stops', data),
+  compare: (data) => api.post('/routes/compare', data),
+  marketIntelligence: (data) => api.post('/routes/market-intelligence', data),
+  priceForecast: (data) => api.post('/routes/price-forecast', data),
 };
 
 export const dashboardApi = {
