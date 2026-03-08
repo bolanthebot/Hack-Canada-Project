@@ -7,11 +7,11 @@ const reportTypes = ['near_miss', 'cyclist_conflict', 'pedestrian_conflict', 'ag
 // Logic to skew severity (more low-severity, fewer high-severity)
 const getRandomSeverity = () => {
   const r = Math.random();
-  if (r < 0.40) return 1;      // 40% probability
-  else if (r < 0.70) return 2; // 30% probability
-  else if (r < 0.85) return 3; // 15% probability
-  else if (r < 0.95) return 4; // 10% probability
-  return 5;                    // 5% probability
+  if (r < 0.3) return 1;      // 30% probability
+  else if (r < 0.6) return 2; // 30% probability
+  else if (r < 0.8) return 3; // 20% probability
+  else if (r < 0.9) return 4; // 10% probability
+  return 5;                    // 10% probability
 };
 
 // Generate random coordinates (70% wider Toronto, 30% Kitchener/Waterloo)
@@ -34,7 +34,7 @@ const getRandomLocation = () => {
   // We'll use a very simple heuristic to discard water points
   let lat = latMin + Math.random() * (latMax - latMin);
   let lng = lngMin + Math.random() * (lngMax - lngMin);
-  
+
   if (!isKW) {
     // Basic shoreline approximation logic: slope from Humber Bay (~ -79.48, 43.63) towards Scarborough (~ -79.16, 43.76)
     // We'll regenerate if it happens to be lower than the rough shoreline.
