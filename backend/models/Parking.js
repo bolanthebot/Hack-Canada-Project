@@ -13,6 +13,12 @@ const parkingSchema = new mongoose.Schema(
     },
     streetName: { type: String, default: '' },
     restrictions: { type: String, default: '' },
+    // Green P Specific Fields
+    source: { type: String, enum: ['user_reported', 'green_p'], default: 'user_reported' },
+    capacity: { type: Number, default: 0 },
+    rate: { type: String, default: '' },
+    carparkType: { type: String, default: '' },
+    paymentMethods: { type: [String], default: [] },
   },
   { timestamps: true }
 );

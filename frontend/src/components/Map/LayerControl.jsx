@@ -1,22 +1,22 @@
 const layers = [
   { id: 'intersections', label: 'Danger zones', dot: '#f87171' },
-  { id: 'parking', label: 'Street parking', dot: '#60a5fa' },
+  { id: 'greenp', label: 'Green P Parking', dot: '#22C55E' },
+  { id: 'street_parking', label: 'Street Parking', dot: '#3b82f6' },
   { id: 'bike', label: 'Bike routes', dot: '#34d399' },
   { id: 'heatmap', label: 'Risk heatmap', dot: '#fb923c' },
 ];
 
 export default function LayerControl({ activeLayers, onToggle }) {
   return (
-    <div className="absolute top-3 right-3 z-[1000] bg-[#161a23]/90 backdrop-blur-sm rounded-lg py-2 px-1 shadow-lg min-w-[140px]">
+    <div className="absolute right-2 bottom-20 sm:right-3 sm:bottom-3 z-[1000] bg-[#161a23]/90 backdrop-blur-sm rounded-lg py-2 px-1 shadow-lg min-w-[140px] max-w-[calc(100vw-1rem)]">
       {layers.map((layer) => {
         const active = activeLayers.includes(layer.id);
         return (
           <button
             key={layer.id}
             onClick={() => onToggle(layer.id)}
-            className={`w-full flex items-center gap-2 px-2.5 py-1.5 rounded text-[12px] transition-colors text-left ${
-              active ? 'text-gray-200' : 'text-gray-500'
-            } hover:bg-white/[0.05]`}
+            className={`w-full flex items-center gap-2 px-2.5 py-1.5 rounded text-[12px] transition-colors text-left ${active ? 'text-gray-200' : 'text-gray-500'
+              } hover:bg-white/[0.05]`}
           >
             <span
               className="w-2 h-2 rounded-full shrink-0 transition-opacity"

@@ -11,15 +11,15 @@ const MODES = [
 const inputCls =
   'w-full bg-white/[0.06] border border-white/[0.08] rounded px-2.5 py-1.5 text-[12px] text-gray-200 focus:outline-none focus:border-teal-500/50 placeholder:text-gray-600';
 
-export default function RouteSearchPanel({ userLocation, clickedDest, onRouteFound, onRouteClear }) {
+export default function RouteSearchPanel({ userLocation, clickedDest, route, onRouteFound, onRouteClear }) {
   const [origin, setOrigin] = useState('');
   const [destination, setDestination] = useState('');
   const [travelMode, setTravelMode] = useState('DRIVE');
   const [useMyLocation, setUseMyLocation] = useState(false);
   const [destCoords, setDestCoords] = useState(null);
-  const [route, setRoute] = useState(null);
   const [loading, setLoading] = useState(false);
   const prevClickRef = useRef(null);
+  const [isMinimized, setIsMinimized] = useState(false);
 
   useEffect(() => {
     if (!clickedDest || clickedDest === prevClickRef.current) return;
@@ -66,7 +66,6 @@ export default function RouteSearchPanel({ userLocation, clickedDest, onRouteFou
         destination: destPayload,
         travelMode,
       });
-      setRoute(res.data);
       onRouteFound?.(res.data);
     } catch (err) {
       toast.error(err.response?.data?.error || 'Could not find route');
@@ -76,7 +75,6 @@ export default function RouteSearchPanel({ userLocation, clickedDest, onRouteFou
   };
 
   const handleClear = () => {
-    setRoute(null);
     onRouteClear?.();
   };
 
@@ -85,12 +83,25 @@ export default function RouteSearchPanel({ userLocation, clickedDest, onRouteFou
   };
 
   return (
-    <div className="absolute top-3 left-3 z-[1000] bg-[#161a23]/90 backdrop-blur-sm rounded-lg p-3 shadow-lg w-[260px]">
-      <div className="text-[11px] text-gray-500 font-medium uppercase tracking-wide mb-2">
-        Route
+    <div className="absolute top-2 left-2 right-2 sm:top-3 sm:left-3 sm:right-auto z-[1000] bg-[#161a23]/90 backdrop-blur-sm rounded-lg p-3 shadow-lg w-auto sm:w-[260px] max-w-[calc(100vw-1rem)]">
+      <div 
+        className={`text-[11px] text-gray-500 font-medium uppercase tracking-wide cursor-pointer flex justify-between items-center ${isMinimized ? '' : 'mb-2'}`}
+        onClick={() => setIsMinimized(!isMinimized)}
+      >
+        <span>Route</span>
+        <svg
+          className={`w-3.5 h-3.5 transition-transform ${isMinimized ? 'rotate-180' : ''}`}
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+        </svg>
       </div>
 
-      <div className="space-y-2 mb-3">
+      {!isMinimized && (
+        <>
+          <div className="space-y-2 mb-3">
         <div>
           <div className="flex gap-1">
             <input
@@ -171,6 +182,8 @@ export default function RouteSearchPanel({ userLocation, clickedDest, onRouteFou
           {route.description && (
             <div className="text-[10px] text-gray-600">{route.description}</div>
           )}
+        </>
+      )}
         </>
       )}
     </div>

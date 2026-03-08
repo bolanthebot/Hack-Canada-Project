@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
+import { useAuth0 } from '@auth0/auth0-react';
 import { intersectionApi } from '../../api';
 import toast from 'react-hot-toast';
 
@@ -12,6 +13,7 @@ const REPORT_TYPES = [
 ];
 
 export default function ReportModal({ onReported }) {
+  const { isAuthenticated, loginWithRedirect: login } = useAuth0();
   const [open, setOpen] = useState(false);
   const [latlng, setLatlng] = useState(null);
   const [reportType, setReportType] = useState('near_miss');
@@ -23,6 +25,10 @@ export default function ReportModal({ onReported }) {
   useMapEvents({
     contextmenu(e) {
       e.originalEvent.preventDefault();
+      if (!isAuthenticated) {
+        toast('Log in to submit a report');
+        return;
+      }
       setLatlng(e.latlng);
       setOpen(true);
     },
@@ -37,6 +43,11 @@ export default function ReportModal({ onReported }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!isAuthenticated) {
+      toast.error('You must be logged in to submit reports');
+      setOpen(false);
+      return;
+    }
     setSubmitting(true);
     try {
       // NOTE: Intersection backend has been deleted.
@@ -63,7 +74,7 @@ export default function ReportModal({ onReported }) {
   return (
     <div
       ref={modalRef}
-      className="absolute top-3 left-[280px] z-[1000] bg-[#161a23] rounded-lg p-4 shadow-lg w-72 border border-white/[0.05]"
+      className="absolute top-2 left-2 right-2 sm:top-3 sm:left-[280px] sm:right-auto z-[1000] bg-[#161a23] rounded-lg p-4 shadow-lg w-auto sm:w-72 max-w-[calc(100vw-1rem)] border border-white/[0.05]"
     >
       <div className="flex items-center justify-between mb-3">
         <h3 className="text-[13px] font-semibold text-gray-200">New report</h3>
@@ -78,6 +89,21 @@ export default function ReportModal({ onReported }) {
       <div className="text-[11px] text-gray-500 mb-3 font-mono">
         {latlng?.lat.toFixed(5)}, {latlng?.lng.toFixed(5)}
       </div>
+
+      {!isAuthenticated && (
+        <div className="mb-3 rounded-md border border-white/[0.08] bg-white/[0.03] p-2.5">
+          <p className="text-[11px] text-gray-300 mb-2">
+            You need to log in to submit reports.
+          </p>
+          <button
+            type="button"
+            onClick={() => login()}
+            className="w-full bg-teal-600 hover:bg-teal-500 text-white text-[12px] font-medium py-1.5 rounded transition-colors"
+          >
+            Log in
+          </button>
+        </div>
+      )}
 
       <form onSubmit={handleSubmit} className="space-y-3">
         <div>
@@ -132,7 +158,7 @@ export default function ReportModal({ onReported }) {
 
         <button
           type="submit"
-          disabled={submitting}
+          disabled={submitting || !isAuthenticated}
           className="w-full bg-teal-600 hover:bg-teal-500 disabled:opacity-40 text-white text-[12px] font-medium py-2 rounded transition-colors"
         >
           {submitting ? 'Saving...' : 'Submit'}

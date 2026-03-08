@@ -1,16 +1,8 @@
-import CarbonComparison from './CarbonComparison';
-import MarketIntelligence from './MarketIntelligence';
 import { useState } from 'react';
 import { routeApi } from '../../api';
 import toast from 'react-hot-toast';
 import RouteResults from './RouteResults';
 import RouteMap from './RouteMap';
-
-const PRESETS = [
-  { label: 'Mississauga → Toronto', origin: 'Mississauga, ON', destination: 'Downtown Toronto, ON' },
-  { label: 'Scarborough → Toronto', origin: 'Scarborough, ON', destination: 'Downtown Toronto, ON' },
-  { label: 'North York → Toronto', origin: 'North York, ON', destination: 'Downtown Toronto, ON' },
-];
 
 const inputCls = `
   w-full bg-transparent border-0 border-b border-white/10 px-0 py-2.5
@@ -110,7 +102,7 @@ export default function RoutePlanner() {
   };
 
   return (
-    <div className="min-h-screen bg-[#080a0f] p-6 lg:p-10">
+    <div className="min-h-screen bg-[#080a0f] p-4 sm:p-6 lg:p-10">
       {/* Page header */}
       <div className="max-w-[1200px] mx-auto mb-8">
         <div className="flex items-end justify-between">
@@ -137,25 +129,6 @@ export default function RoutePlanner() {
         {/* Sidebar */}
         <div className="lg:col-span-3">
           <div className="bg-[#0d1017] border border-white/[0.05] rounded-xl overflow-hidden sticky top-6">
-
-            {/* Presets */}
-            <div className="px-5 py-4 border-b border-white/[0.04]">
-              <div className="text-[10px] uppercase tracking-[0.15em] text-gray-600 font-semibold mb-3">
-                Quick routes
-              </div>
-              <div className="space-y-0.5">
-                {PRESETS.map((p, i) => (
-                  <button
-                    key={i}
-                    onClick={() => applyPreset(p)}
-                    className="w-full text-left text-[12px] text-gray-500 hover:text-teal-400 py-1.5 px-2 rounded-lg hover:bg-teal-500/[0.06] transition-all duration-150 font-mono"
-                  >
-                    {p.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-
             {/* Form */}
             <form onSubmit={handleSubmit} className="px-5 py-5 space-y-5">
               <Field label="Origin">
@@ -248,18 +221,6 @@ export default function RoutePlanner() {
               </button>
             </form>
           </div>
-          {/* Carbon Cost Navigator */}
-          <div className="px-5 py-5 border-t border-white/[0.04]">
-            <CarbonComparison
-              defaultOrigin={origin}
-              defaultDestination={destination}
-            />
-          </div>
-
-          {/* Market Intelligence */}
-          <div className="px-5 py-5 border-t border-white/[0.04]">
-            <MarketIntelligence autoLoad={false} />
-          </div>
         </div>
 
         {/* Main content */}
@@ -267,7 +228,7 @@ export default function RoutePlanner() {
           <RouteMap
             routes={result?.routes || []}
             activeRoute={activeRoute}
-            gasStops={gasStops?.stations || []}
+            gasStops={gasStops}
             gasLoading={gasLoading}
           />
 

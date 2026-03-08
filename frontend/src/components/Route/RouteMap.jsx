@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import { Fragment, useEffect, useMemo } from 'react';
 import {
   MapContainer as LeafletMap,
   TileLayer,
@@ -51,10 +51,22 @@ function stopIcon(stopNumber) {
 function FitBounds({ decoded, gasStops }) {
   const map = useMap();
   useEffect(() => {
-    const allPts = decoded.flatMap((r) => r.points);
+    const routePts = decoded.flatMap((r) => r.points);
+    const stopPts = (gasStops?.plannedStops || [])
+      .map((stop) => {
+        if (stop.recommendedStation?.lat != null && stop.recommendedStation?.lng != null) {
+          return [stop.recommendedStation.lat, stop.recommendedStation.lng];
+        }
+        if (stop.lat != null && stop.lng != null) {
+          return [stop.lat, stop.lng];
+        }
+        return null;
+      })
+      .filter(Boolean);
+    const allPts = [...routePts, ...stopPts];
     if (allPts.length === 0) return;
     map.fitBounds(L.latLngBounds(allPts), { padding: [60, 60] });
-  }, [decoded, map]);
+  }, [decoded, gasStops, map]);
   return null;
 }
 
@@ -104,18 +116,16 @@ export default function RouteMap({ routes = [], activeRoute, gasStops = null, ga
         {decoded
           .filter((r) => r.routeType === activeRoute)
           .map((r) => (
-            <>
+            <Fragment key={`${r.routeType}-group`}>
               <Polyline
-                key={`${r.routeType}-glow`}
                 positions={r.points}
                 pathOptions={{ color: ROUTE_COLORS[r.routeType] || '#888', weight: 10, opacity: 0.15 }}
               />
               <Polyline
-                key={`${r.routeType}-active`}
                 positions={r.points}
                 pathOptions={{ color: ROUTE_COLORS[r.routeType] || '#888', weight: 4, opacity: 1 }}
               />
-            </>
+            </Fragment>
           ))}
 
         {/* Origin / destination */}
@@ -134,7 +144,11 @@ export default function RouteMap({ routes = [], activeRoute, gasStops = null, ga
         {plannedStops.map((stop) => (
           <Marker
             key={stop.stopNumber}
-            position={[stop.lat, stop.lng]}
+            position={
+              stop.recommendedStation?.lat != null && stop.recommendedStation?.lng != null
+                ? [stop.recommendedStation.lat, stop.recommendedStation.lng]
+                : [stop.lat, stop.lng]
+            }
             icon={stopIcon(stop.stopNumber)}
           >
             <Tooltip direction="top" offset={[0, -18]} opacity={1}>

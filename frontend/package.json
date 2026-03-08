@@ -4,12 +4,13 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "vite --port 5173 --strictPort --host",
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview"
   },
   "dependencies": {
+    "@auth0/auth0-react": "^2.15.0",
     "axios": "^1.13.6",
     "leaflet": "^1.9.4",
     "leaflet.heat": "^0.2.0",

@@ -1,11 +1,11 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import MapContainer from '../components/Map/MapContainer';
 import LayerControl from '../components/Map/LayerControl';
 import HeatmapLayer from '../components/Map/HeatmapLayer';
 import IntersectionMarkers from '../components/Intersection/IntersectionMarkers';
 import ReportModal from '../components/Intersection/ReportModal';
 import ParkingMarkers from '../components/Parking/ParkingMarkers';
-import ParkingPanel from '../components/Parking/ParkingPanel';
 import BikeSegments from '../components/Bike/BikeSegments';
 import BikeFilterPanel from '../components/Bike/BikeFilterPanel';
 import RouteSearchPanel from '../components/Map/RouteSearchPanel';
@@ -13,7 +13,9 @@ import RouteLayer from '../components/Map/RouteLayer';
 import { intersectionApi, parkingApi, bikeApi } from '../api';
 
 export default function HomePage() {
-  const [activeLayers, setActiveLayers] = useState(['intersections', 'parking', 'bike']);
+  const location = useLocation();
+  const navigate = useNavigate();
+  const [activeLayers, setActiveLayers] = useState(['intersections','heatmap']);
   const [intersections, setIntersections] = useState([]);
   const [hotspots, setHotspots] = useState([]);
   const [parkingSpots, setParkingSpots] = useState([]);
@@ -22,6 +24,13 @@ export default function HomePage() {
   const [route, setRoute] = useState(null);
   const [userLocation, setUserLocation] = useState(null);
   const [clickedDest, setClickedDest] = useState(null);
+
+  useEffect(() => {
+    if (location.state?.importedRoute) {
+      setRoute(location.state.importedRoute);
+      navigate('.', { replace: true, state: {} });
+    }
+  }, [location.state, navigate]);
 
   useEffect(() => {
     if (!navigator.geolocation) return;
@@ -68,7 +77,7 @@ export default function HomePage() {
   };
 
   return (
-    <div className="relative w-full h-screen">
+    <div className="relative w-full h-[100dvh]">
       <MapContainer center={userLocation} userLocation={userLocation} onMapClick={setClickedDest}>
         <ReportModal onReported={loadIntersections} />
 
@@ -80,8 +89,18 @@ export default function HomePage() {
           <HeatmapLayer points={intersections} />
         )}
 
-        {activeLayers.includes('parking') && (
-          <ParkingMarkers spots={parkingSpots} onUpdate={loadParking} />
+        {activeLayers.includes('greenp') && (
+          <ParkingMarkers 
+             spots={parkingSpots.filter(spot => spot.source === 'green_p')} 
+             onUpdate={loadParking} 
+          />
+        )}
+
+        {activeLayers.includes('street_parking') && (
+          <ParkingMarkers 
+             spots={parkingSpots.filter(spot => spot.source === 'user_reported')} 
+             onUpdate={loadParking} 
+          />
         )}
 
         {activeLayers.includes('bike') && (
@@ -94,13 +113,12 @@ export default function HomePage() {
       <RouteSearchPanel
         userLocation={userLocation}
         clickedDest={clickedDest}
+        route={route}
         onRouteFound={setRoute}
         onRouteClear={() => setRoute(null)}
       />
 
       <LayerControl activeLayers={activeLayers} onToggle={toggleLayer} />
-
-      {activeLayers.includes('parking') && <ParkingPanel />}
 
       {activeLayers.includes('bike') && (
         <BikeFilterPanel minScore={bikeMinScore} onMinScoreChange={setBikeMinScore} />
