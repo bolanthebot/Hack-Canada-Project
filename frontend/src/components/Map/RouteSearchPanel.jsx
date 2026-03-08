@@ -85,7 +85,7 @@ export default function RouteSearchPanel({ userLocation, clickedDest, onRouteFou
   };
 
   return (
-    <div className="absolute top-3 left-3 z-[1000] bg-[#161a23]/90 backdrop-blur-sm rounded-lg p-3 shadow-lg w-[260px]">
+    <div className="absolute top-2 left-2 right-2 sm:top-3 sm:left-3 sm:right-auto z-[1000] bg-[#161a23]/90 backdrop-blur-sm rounded-lg p-3 shadow-lg w-auto sm:w-[260px] max-w-[calc(100vw-1rem)]">
       <div className="text-[11px] text-gray-500 font-medium uppercase tracking-wide mb-2">
         Route
       </div>

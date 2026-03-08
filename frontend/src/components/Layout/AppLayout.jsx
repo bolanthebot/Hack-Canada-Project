@@ -24,7 +24,7 @@ export default function AppLayout() {
       />
       <Sidebar collapsed={collapsed} onToggle={() => setCollapsed(!collapsed)} />
       <main
-        className={`flex-1 transition-all duration-200 ${collapsed ? 'ml-[52px]' : 'ml-52'}`}
+        className={`flex-1 pb-16 md:pb-0 transition-all duration-200 ${collapsed ? 'md:ml-[52px]' : 'md:ml-52'}`}
       >
         <Outlet />
       </main>

@@ -12,7 +12,7 @@ import RouteLayer from '../components/Map/RouteLayer';
 import { intersectionApi, parkingApi, bikeApi } from '../api';
 
 export default function HomePage() {
-  const [activeLayers, setActiveLayers] = useState(['intersections', 'greenp', 'street_parking', 'bike']);
+  const [activeLayers, setActiveLayers] = useState(['intersections','heatmap']);
   const [intersections, setIntersections] = useState([]);
   const [hotspots, setHotspots] = useState([]);
   const [parkingSpots, setParkingSpots] = useState([]);
@@ -67,7 +67,7 @@ export default function HomePage() {
   };
 
   return (
-    <div className="relative w-full h-screen">
+    <div className="relative w-full h-[100dvh]">
       <MapContainer center={userLocation} userLocation={userLocation} onMapClick={setClickedDest}>
         <ReportModal onReported={loadIntersections} />
 

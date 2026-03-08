@@ -8,7 +8,7 @@ const layers = [
 
 export default function LayerControl({ activeLayers, onToggle }) {
   return (
-    <div className="absolute top-3 right-3 z-[1000] bg-[#161a23]/90 backdrop-blur-sm rounded-lg py-2 px-1 shadow-lg min-w-[140px]">
+    <div className="absolute right-2 bottom-20 sm:right-3 sm:bottom-3 z-[1000] bg-[#161a23]/90 backdrop-blur-sm rounded-lg py-2 px-1 shadow-lg min-w-[140px] max-w-[calc(100vw-1rem)]">
       {layers.map((layer) => {
         const active = activeLayers.includes(layer.id);
         return (

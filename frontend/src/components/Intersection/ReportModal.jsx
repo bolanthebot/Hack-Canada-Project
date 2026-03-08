@@ -74,7 +74,7 @@ export default function ReportModal({ onReported }) {
   return (
     <div
       ref={modalRef}
-      className="absolute top-3 left-[280px] z-[1000] bg-[#161a23] rounded-lg p-4 shadow-lg w-72 border border-white/[0.05]"
+      className="absolute top-2 left-2 right-2 sm:top-3 sm:left-[280px] sm:right-auto z-[1000] bg-[#161a23] rounded-lg p-4 shadow-lg w-auto sm:w-72 max-w-[calc(100vw-1rem)] border border-white/[0.05]"
     >
       <div className="flex items-center justify-between mb-3">
         <h3 className="text-[13px] font-semibold text-gray-200">New report</h3>
