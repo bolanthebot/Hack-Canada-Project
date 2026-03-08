@@ -1,10 +1,10 @@
 import { Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
 
-function getRiskColor(count) {
-  if (count >= 5) return '#f87171';
-  if (count >= 2) return '#fbbf24';
-  return '#6ee7b7';
+function getRiskColor(severity) {
+  if (severity >= 4) return '#f87171';
+  if (severity >= 2) return '#fbbf24';
+  return '#6bd192ff';
 }
 
 function createIcon(color) {
@@ -29,7 +29,7 @@ export default function IntersectionMarkers({ reports, grouped }) {
       <Marker
         key={`g-${i}`}
         position={[g._id.lat, g._id.lng]}
-        icon={createIcon(getRiskColor(g.count))}
+        icon={createIcon(getRiskColor(g.avgSeverity))}
       >
         <Popup>
           <div style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, lineHeight: 1.5 }}>
