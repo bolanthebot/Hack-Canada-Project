@@ -1,9 +1,14 @@
 const layers = [
   { id: 'intersections', label: 'Safety Zones', dot: '#f43f5e' },
   { id: 'greenp', label: 'Green P Parking', dot: '#22C55E' },
+<<<<<<< HEAD
   { id: 'street_parking', label: 'Street Parking', dot: '#3b82f6' },
   { id: 'bike', label: 'Bike Corridors', dot: '#10b981' },
   { id: 'heatmap', label: 'Risk Heatmap', dot: '#f59e0b' },
+=======
+  { id: 'bike', label: 'Bike routes', dot: '#34d399' },
+  { id: 'heatmap', label: 'Risk heatmap', dot: '#fb923c' },
+>>>>>>> parent of ea097f8 (add back street-level parking)
 ];
 
 export default function LayerControl({ activeLayers, onToggle }) {
