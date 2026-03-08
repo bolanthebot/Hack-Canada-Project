@@ -28,9 +28,9 @@ export default function MapContainer({ children, center, userLocation, onMapClic
       zoom={13}
       zoomControl={false}
       className={`w-full h-full ${className}`}
-      style={{ minHeight: '100dvh' }}
+      style={{ height: '100%' }}
     >
-      <ZoomControl position="bottomright" />
+      <ZoomControl position="topright" />
       <TileLayer
         attribution='&copy; <a href="https://carto.com/">CARTO</a>'
         url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"

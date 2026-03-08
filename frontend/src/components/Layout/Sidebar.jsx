@@ -143,7 +143,7 @@ export default function Sidebar({ collapsed, onToggle }) {
         </div>
       </aside>
 
-      <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-[#10131a]/95 backdrop-blur border-t border-white/[0.08] pb-[max(env(safe-area-inset-bottom),0.4rem)]">
+      <nav className="fixed bottom-0 left-0 right-0 z-[2200] md:hidden bg-[#10131a]/95 backdrop-blur border-t border-white/[0.08] pb-[max(env(safe-area-inset-bottom),0.4rem)]">
         <div className="grid grid-cols-4">
           {navItems.map((item) => (
             <NavLink

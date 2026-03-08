@@ -77,7 +77,7 @@ export default function HomePage() {
   };
 
   return (
-    <div className="relative w-full h-[100dvh]">
+    <div className="relative w-full h-[calc(100dvh-5rem)] md:h-[100dvh]">
       <MapContainer center={userLocation} userLocation={userLocation} onMapClick={setClickedDest}>
         <ReportModal onReported={loadIntersections} />
 
