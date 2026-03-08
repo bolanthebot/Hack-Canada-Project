@@ -237,7 +237,7 @@ export default function RoutePlanner() {
           <RouteMap
             routes={result?.routes || []}
             activeRoute={activeRoute}
-            gasStops={gasStops?.stations || []}
+            gasStops={gasStops}
             gasLoading={gasLoading}
           />
 
