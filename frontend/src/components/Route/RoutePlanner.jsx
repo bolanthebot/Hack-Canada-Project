@@ -1,5 +1,5 @@
 import CarbonComparison from './CarbonComparison';
-import { useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { routeApi } from '../../api';
 import toast from 'react-hot-toast';
 import RouteResults from './RouteResults';
@@ -48,12 +48,36 @@ export default function RoutePlanner() {
   const [findGas, setFindGas] = useState(false);
   const [tankKm, setTankKm] = useState('500');
   const [currentFuelPercent, setCurrentFuelPercent] = useState('100');
-  const [gasStops, setGasStops] = useState(null);
-  const [gasLoading, setGasLoading] = useState(false);
+  const [gasStopsByRoute, setGasStopsByRoute] = useState({});
+  const [gasLoadingRoute, setGasLoadingRoute] = useState(null);
 
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
   const [activeRoute, setActiveRoute] = useState('fastest');
+
+  const fetchGasStopsForRoute = useCallback(async (routeType) => {
+    setGasLoadingRoute(routeType);
+    try {
+      const gasRes = await routeApi.getGasStops({
+        origin: origin.trim(),
+        destination: destination.trim(),
+        tankKm: parseFloat(tankKm) || 500,
+        currentFuelPercent: parseFloat(currentFuelPercent) || 100,
+        routeType,
+      });
+      setGasStopsByRoute((prev) => ({ ...prev, [routeType]: gasRes.data }));
+    } catch (err) {
+      toast.error(err.response?.data?.error || 'Could not fetch gas stops');
+    } finally {
+      setGasLoadingRoute((current) => (current === routeType ? null : current));
+    }
+  }, [currentFuelPercent, destination, origin, tankKm]);
+
+  useEffect(() => {
+    if (!findGas || !result) return;
+    if (gasStopsByRoute[activeRoute]) return;
+    fetchGasStopsForRoute(activeRoute);
+  }, [activeRoute, fetchGasStopsForRoute, findGas, gasStopsByRoute, result]);
 
   const applyPreset = (preset) => {
     setOrigin(preset.origin);
@@ -67,7 +91,8 @@ export default function RoutePlanner() {
       return;
     }
     setLoading(true);
-    setGasStops(null);
+    setGasStopsByRoute({});
+    setGasLoadingRoute(null);
     try {
       const res = await routeApi.plan({
         origin: origin.trim(),
@@ -85,22 +110,12 @@ export default function RoutePlanner() {
     }
 
     if (findGas) {
-      setGasLoading(true);
-      try {
-        const gasRes = await routeApi.getGasStops({
-          origin: origin.trim(),
-          destination: destination.trim(),
-          tankKm: parseFloat(tankKm) || 500,
-          currentFuelPercent: parseFloat(currentFuelPercent) || 100,
-        });
-        setGasStops(gasRes.data);
-      } catch (err) {
-        toast.error(err.response?.data?.error || 'Could not fetch gas stops');
-      } finally {
-        setGasLoading(false);
-      }
+      await fetchGasStopsForRoute(activeRoute);
     }
   };
+
+  const gasStops = findGas ? (gasStopsByRoute[activeRoute] || null) : null;
+  const gasLoading = findGas ? gasLoadingRoute === activeRoute : false;
 
   return (
     <div className="min-h-screen bg-[#080a0f] p-4 sm:p-6 lg:p-10">

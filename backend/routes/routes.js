@@ -37,6 +37,11 @@ const OVERPASS_ENDPOINTS = [
   'https://overpass.kumi.systems/api/interpreter',
   'https://maps.mail.ru/osm/tools/overpass/api/interpreter',
 ];
+const ROUTE_MODIFIERS = {
+  fastest: {},
+  cheapest: { avoidTolls: true },
+  safest: { avoidHighways: true },
+};
 
 const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -381,13 +386,25 @@ router.post('/plan', async (req, res) => {
 // ---------------------------------------------------------------------------
 router.post('/gas-stops', async (req, res) => {
   try {
-    const { origin, destination, tankKm = 500, currentFuelPercent = 100 } = req.body;
+    const {
+      origin,
+      destination,
+      tankKm = 500,
+      currentFuelPercent = 100,
+      routeType = 'fastest',
+    } = req.body;
 
     if (!origin || !destination) {
       return res.status(400).json({ error: 'origin and destination are required' });
     }
+    if (!ROUTE_MODIFIERS[routeType]) {
+      return res.status(400).json({ error: 'routeType must be one of: fastest, cheapest, safest' });
+    }
 
-    const raw = await fetchRoute(origin, destination, { travelMode: 'DRIVE' });
+    const raw = await fetchRoute(origin, destination, {
+      travelMode: 'DRIVE',
+      routeModifiers: ROUTE_MODIFIERS[routeType],
+    });
     const { distance, polyline } = parseRoute(raw);
     const polylinePoints = decodePolylineWithDistance(polyline);
     const routeTotalKm = polylinePoints[polylinePoints.length - 1].distFromStart;
@@ -411,6 +428,7 @@ router.post('/gas-stops', async (req, res) => {
       console.log('\nResult: no stops needed');
       console.log('=======================================\n');
       return res.json({
+        routeType,
         routeDistanceKm: Math.round(routeTotalKm * 10) / 10,
         stopsNeeded: 0,
         canCompleteWithoutStop: true,
@@ -488,6 +506,7 @@ router.post('/gas-stops', async (req, res) => {
     console.log('=======================================\n');
 
     res.json({
+      routeType,
       routeDistanceKm: Math.round(routeTotalKm * 10) / 10,
       stopsNeeded: plannedStops.length,
       canCompleteWithoutStop: false,
