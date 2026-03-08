@@ -9,7 +9,10 @@ export default defineConfig({
     port: 5173,
     allowedHosts: ['urban.lukasdsouza.com'], // or ['.yourdomain.com']
     proxy: {
-      '/api': 'http://localhost:5000',
+      '/api': {
+        target: 'http://localhost:5000',
+        changeOrigin: true,
+      },
       '/ml': 'http://localhost:5001',
     },
   },

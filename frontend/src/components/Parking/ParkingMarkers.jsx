@@ -15,7 +15,21 @@ function createParkingIcon(source) {
   });
 }
 
-export default function ParkingMarkers({ spots }) {
+export default function ParkingMarkers({ spots, onUpdate }) {
+  const toggleStatus = async (spot) => {
+    const newStatus = spot.status === 'available' ? 'taken' : 'available';
+    try {
+      await parkingApi.report({
+        location: spot.location,
+        status: newStatus,
+        streetName: spot.streetName,
+      });
+      toast.success(`Spot updated`);
+      onUpdate?.();
+    } catch {
+      toast.error('Update failed');
+    }
+  };
   return spots.map((spot) => (
     <Marker
       key={spot._id}
