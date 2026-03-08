@@ -11,13 +11,12 @@ const MODES = [
 const inputCls =
   'w-full bg-white/[0.06] border border-white/[0.08] rounded px-2.5 py-1.5 text-[12px] text-gray-200 focus:outline-none focus:border-teal-500/50 placeholder:text-gray-600';
 
-export default function RouteSearchPanel({ userLocation, clickedDest, onRouteFound, onRouteClear }) {
+export default function RouteSearchPanel({ userLocation, clickedDest, route, onRouteFound, onRouteClear }) {
   const [origin, setOrigin] = useState('');
   const [destination, setDestination] = useState('');
   const [travelMode, setTravelMode] = useState('DRIVE');
   const [useMyLocation, setUseMyLocation] = useState(false);
   const [destCoords, setDestCoords] = useState(null);
-  const [route, setRoute] = useState(null);
   const [loading, setLoading] = useState(false);
   const prevClickRef = useRef(null);
   const [isMinimized, setIsMinimized] = useState(false);
@@ -67,7 +66,6 @@ export default function RouteSearchPanel({ userLocation, clickedDest, onRouteFou
         destination: destPayload,
         travelMode,
       });
-      setRoute(res.data);
       onRouteFound?.(res.data);
     } catch (err) {
       toast.error(err.response?.data?.error || 'Could not find route');
@@ -77,7 +75,6 @@ export default function RouteSearchPanel({ userLocation, clickedDest, onRouteFou
   };
 
   const handleClear = () => {
-    setRoute(null);
     onRouteClear?.();
   };
 
