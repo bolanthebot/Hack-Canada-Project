@@ -1,6 +1,6 @@
 export default function BikeFilterPanel({ minScore, onMinScoreChange }) {
   return (
-    <div className="absolute left-2 right-2 bottom-20 sm:left-auto sm:right-3 sm:bottom-3 z-[1000] bg-[#161a23] rounded-lg shadow-lg w-auto sm:w-56 border border-white/[0.05] px-3 py-3">
+    <div className="absolute left-2 right-2 bottom-20 sm:left-3 sm:right-auto sm:bottom-3 z-[1000] bg-[#161a23] rounded-lg shadow-lg w-auto sm:w-56 border border-white/[0.05] px-3 py-3">
       <div className="text-[11px] text-gray-500 font-medium uppercase tracking-wide mb-2.5">
         Bike safety
       </div>
