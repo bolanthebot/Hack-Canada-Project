@@ -4,6 +4,7 @@ import HomePage from './pages/HomePage';
 import DashboardPage from './pages/DashboardPage';
 import RoutePlannerPage from './pages/RoutePlannerPage';
 import LoginPage from './pages/LoginPage';
+import CommutePage from './pages/CommutePage';
 
 export default function App() {
   return (
@@ -13,6 +14,7 @@ export default function App() {
         <Route element={<AppLayout />}>
           <Route path="/" element={<HomePage />} />
           <Route path="/dashboard" element={<DashboardPage />} />
+          <Route path="/commute" element={<CommutePage />} />
           <Route path="/route-planner" element={<RoutePlannerPage />} />
         </Route>
       </Routes>
