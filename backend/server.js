@@ -9,7 +9,7 @@ app.use(cors({
     if (!origin) return callback(null, true);
     if (origin.match(/^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/) ||
       origin.match(/^https?:\/\/.*\.vercel\.app$/) ||
-      origin.match(/^https?:\/\/.*\.netlify\.app$/)) {
+      origin.match(/^https?:\/\/.*\.lukasdsouza\.com$/)) {
       return callback(null, true);
     }
     callback(new Error('Not allowed by CORS'));
