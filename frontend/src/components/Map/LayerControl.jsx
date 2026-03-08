@@ -61,6 +61,5 @@ export default function LayerControl({ activeLayers, onToggle }) {
     })}
   </div>
 </div>
-    </div>
   );
 }
