@@ -52,11 +52,10 @@ const S = {
         border: "1px solid #1e2530",
         borderRadius: 6,
         padding: "14px 16px",
-        flex: 1,
     },
-    row: { display: "flex", gap: 10, marginTop: 14 },
+    row: { display: "flex", flexDirection: "column", gap: 10, marginTop: 14 },
     modeTitle: { fontSize: 11, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 10 },
-    stat: { display: "flex", justifyContent: "space-between", marginBottom: 6, fontSize: 12 },
+    stat: { display: "flex", gap: 8, justifyContent: "space-between", marginBottom: 6, fontSize: 12 },
     statLabel: { color: "#64748b" },
     statVal: { color: "#e2e8f0", fontWeight: 600 },
     recBanner: {
@@ -267,8 +266,9 @@ export default function CarbonComparison({ defaultOrigin = "", defaultDestinatio
                         borderRadius: 6,
                         padding: "12px 16px",
                         marginTop: 10,
-                        display: "flex",
-                        justifyContent: "space-between",
+                        display: "grid",
+                        gridTemplateColumns: "1fr 1fr",
+                        gap: 12,
                         border: "1px solid #1e2530",
                     }}>
                         <div style={{ textAlign: "center" }}>
