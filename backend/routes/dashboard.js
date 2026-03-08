@@ -15,7 +15,6 @@ router.get('/stats', async (_req, res) => {
       parkingByHour,
       totalBikeSegments,
       bikeScoreDistribution,
-      recentReports,
     ] = await Promise.all([
       // Total intersection reports
       Intersection.countDocuments(),
@@ -77,9 +76,6 @@ router.get('/stats', async (_req, res) => {
           },
         },
       ]),
-
-      // Recent Reports (Latest 10)
-      Intersection.find().sort({ createdAt: -1 }).limit(10),
     ]);
 
     res.json({
@@ -91,7 +87,6 @@ router.get('/stats', async (_req, res) => {
       parkingByHour,
       totalBikeSegments,
       bikeScoreDistribution,
-      recentReports,
     });
   } catch (err) {
     res.status(500).json({ error: err.message });

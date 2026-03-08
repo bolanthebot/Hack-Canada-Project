@@ -27,27 +27,27 @@ export default function ParkingPanel() {
   const pct = prediction ? Math.round(prediction.probability * 100) : null;
 
   return (
-    <div className="absolute bottom-4 left-4 z-[1000] glass-panel rounded-2xl shadow-2xl w-64 overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <div className="p-4 py-3 pb-2">
-        <div className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-3">
-          Smart Parking Forecast
+    <div className="absolute bottom-3 left-3 z-[1000] bg-[#161a23] rounded-lg shadow-lg w-60 border border-white/[0.05] overflow-hidden">
+      <div className="px-3 pt-3 pb-2">
+        <div className="text-[11px] text-gray-500 font-medium uppercase tracking-wide mb-2">
+          Parking forecast
         </div>
-        <div className="flex gap-2">
-          <div className="relative flex-1">
+        <div className="flex items-end gap-2">
+          <div className="flex-1">
             <input
               type="number"
               min="0"
               max="23"
               value={hour}
               onChange={(e) => setHour(Number(e.target.value))}
-              className="input-base w-full h-9 font-mono pr-8 text-[13px]"
+              className="w-full bg-white/[0.04] border border-white/[0.06] rounded px-2 py-1.5 text-[13px] text-gray-200 focus:outline-none focus:border-teal-500/40 font-mono"
             />
-            <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px] font-bold text-gray-600 pointer-events-none">h</span>
+            <div className="text-[10px] text-gray-600 mt-0.5">Hour (0-23)</div>
           </div>
           <button
             onClick={predict}
             disabled={loading}
-            className="btn-primary h-9 px-4 text-xs font-bold leading-none"
+            className="px-3 py-1.5 bg-white/[0.06] hover:bg-white/[0.1] disabled:opacity-40 text-[12px] text-gray-300 font-medium rounded transition-colors"
           >
             {loading ? '...' : 'Check'}
           </button>
@@ -55,18 +55,18 @@ export default function ParkingPanel() {
       </div>
 
       {prediction && (
-        <div className="border-t border-white/[0.06] p-4 pt-3 mt-1 animate-in fade-in slide-in-from-top-2 duration-300">
-          <div className="flex items-center justify-between mb-3">
-            <span className={`text-2xl font-black tracking-tight tabular-nums ${pct > 50 ? 'text-emerald-400' : 'text-rose-400'}`}>
+        <div className="border-t border-white/[0.04] px-3 py-3">
+          <div className="flex items-baseline justify-between mb-2">
+            <span className={`text-2xl font-semibold tabular-nums ${pct > 50 ? 'text-emerald-400' : 'text-red-400'}`}>
               {pct}%
             </span>
-            <span className="text-[10px] text-gray-500 font-bold uppercase tracking-wider text-right">
-              Success<br />Probability
+            <span className="text-[11px] text-gray-500">
+              chance of open spot
             </span>
           </div>
-          <div className="w-full h-1.5 rounded-full bg-white/[0.04] overflow-hidden">
+          <div className="w-full h-1 rounded-full bg-white/[0.06] overflow-hidden">
             <div
-              className={`h-full rounded-full transition-all duration-1000 ease-out ${pct > 50 ? 'bg-gradient-to-r from-emerald-600 to-emerald-400' : 'bg-gradient-to-r from-rose-600 to-rose-400'}`}
+              className={`h-full rounded-full transition-all duration-500 ${pct > 50 ? 'bg-emerald-500' : 'bg-red-500'}`}
               style={{ width: `${pct}%` }}
             />
           </div>

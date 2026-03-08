@@ -7,7 +7,7 @@ const DEFAULT_CENTER = [43.6532, -79.3832];
 function FlyToCenter({ center }) {
   const map = useMap();
   useEffect(() => {
-    if (center) map.flyTo(center, 14, { duration: 2, easeLinearity: 0.1 });
+    if (center) map.flyTo(center, 14, { duration: 1.2 });
   }, [center, map]);
   return null;
 }
@@ -31,11 +31,9 @@ export default function MapContainer({ children, center, userLocation, onMapClic
       style={{ minHeight: '100dvh' }}
     >
       <ZoomControl position="bottomright" />
-
-      {/* Standard OpenStreetMap Style (Vibrant Colors, Yellow Roads) */}
       <TileLayer
-        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+        attribution='&copy; <a href="https://carto.com/">CARTO</a>'
+        url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
       />
 
       {center && <FlyToCenter center={center} />}
@@ -44,12 +42,12 @@ export default function MapContainer({ children, center, userLocation, onMapClic
       {userLocation && (
         <CircleMarker
           center={userLocation}
-          radius={7}
+          radius={8}
           pathOptions={{
-            color: '#ffffff',
-            fillColor: '#2563eb',
-            fillOpacity: 1,
-            weight: 3,
+            color: '#3b82f6',
+            fillColor: '#3b82f6',
+            fillOpacity: 0.35,
+            weight: 2,
           }}
         />
       )}

@@ -6,10 +6,10 @@ import { intersectionApi } from '../../api';
 import toast from 'react-hot-toast';
 
 const REPORT_TYPES = [
-  { value: 'near_miss', label: 'Near Miss Incident' },
-  { value: 'cyclist_conflict', label: 'Cyclist Conflict' },
-  { value: 'pedestrian_conflict', label: 'Pedestrian Conflict' },
-  { value: 'aggressive_driver', label: 'Aggressive Driving' },
+  { value: 'near_miss', label: 'Near miss' },
+  { value: 'cyclist_conflict', label: 'Cyclist conflict' },
+  { value: 'pedestrian_conflict', label: 'Pedestrian conflict' },
+  { value: 'aggressive_driver', label: 'Aggressive driving' },
 ];
 
 export default function ReportModal({ onReported }) {
@@ -36,6 +36,7 @@ export default function ReportModal({ onReported }) {
 
   useEffect(() => {
     if (!open || !modalRef.current) return;
+    // Prevent modal interactions from triggering map click handlers.
     L.DomEvent.disableClickPropagation(modalRef.current);
     L.DomEvent.disableScrollPropagation(modalRef.current);
   }, [open]);
@@ -43,25 +44,26 @@ export default function ReportModal({ onReported }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!isAuthenticated) {
-      toast.error('Authentication required for reporting');
+      toast.error('You must be logged in to submit reports');
       setOpen(false);
       return;
     }
     setSubmitting(true);
     try {
+      // NOTE: Intersection backend has been deleted.
       await intersectionApi.create({
         location: { type: 'Point', coordinates: [latlng.lng, latlng.lat] },
         reportType,
         severity,
         description,
       });
-      toast.success('Grid intelligence updated successfully');
+      toast.success('Report submitted');
       setOpen(false);
       setDescription('');
       setSeverity(3);
       onReported?.();
     } catch {
-      toast.error('Failed to submit report. System offline?');
+      toast.error('Something went wrong');
     } finally {
       setSubmitting(false);
     }
@@ -74,52 +76,49 @@ export default function ReportModal({ onReported }) {
       ref={modalRef}
       className="absolute top-2 left-2 right-2 sm:top-3 sm:left-[280px] sm:right-auto z-[1000] bg-[#161a23] rounded-lg p-4 shadow-lg w-auto sm:w-72 max-w-[calc(100vw-1rem)] border border-white/[0.05]"
     >
-      <div className="flex items-start justify-between mb-8">
-        <div>
-          <div className="text-[10px] font-black text-blue-600 uppercase tracking-[0.4em] mb-1">
-            Hazard Report
-          </div>
-          <h3 className="text-xl font-black text-gray-900 tracking-tight leading-none">Intelligence Input</h3>
-          <div className="text-[10px] font-black text-gray-300 mt-2 uppercase tracking-widest font-mono">
-            {latlng?.lat.toFixed(5)}N / {latlng?.lng.toFixed(5)}W
-          </div>
-        </div>
+      <div className="flex items-center justify-between mb-3">
+        <h3 className="text-[13px] font-semibold text-gray-200">New report</h3>
         <button
           onClick={() => setOpen(false)}
-          className="w-10 h-10 rounded-2xl flex items-center justify-center text-gray-400 hover:text-gray-900 hover:bg-gray-50 transition-all border border-gray-50"
+          className="w-6 h-6 rounded flex items-center justify-center text-gray-500 hover:text-gray-300 hover:bg-white/[0.06] transition-colors"
         >
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round"><path d="M18 6L6 18" /><path d="M6 6l12 12" /></svg>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M18 6L6 18" /><path d="M6 6l12 12" /></svg>
         </button>
       </div>
 
+      <div className="text-[11px] text-gray-500 mb-3 font-mono">
+        {latlng?.lat.toFixed(5)}, {latlng?.lng.toFixed(5)}
+      </div>
+
       {!isAuthenticated && (
-        <div className="mb-8 rounded-3xl bg-blue-50 border border-blue-100 p-6">
-          <p className="text-xs font-bold text-blue-800 mb-4 leading-relaxed">
-            Authentication is required to log safety incidents into the UrbanFlow grid.
+        <div className="mb-3 rounded-md border border-white/[0.08] bg-white/[0.03] p-2.5">
+          <p className="text-[11px] text-gray-300 mb-2">
+            You need to log in to submit reports.
           </p>
           <button
             type="button"
             onClick={() => login()}
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white text-[10px] font-black uppercase tracking-widest py-4 rounded-xl shadow-lg shadow-blue-500/20 transition-all"
+            className="w-full bg-teal-600 hover:bg-teal-500 text-white text-[12px] font-medium py-1.5 rounded transition-colors"
           >
-            Authorize Access
+            Log in
           </button>
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="space-y-8">
+      <form onSubmit={handleSubmit} className="space-y-3">
         <div>
-          <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4">Conflict Category</label>
-          <div className="grid grid-cols-1 gap-2">
+          <label className="block text-[11px] text-gray-400 mb-1.5 font-medium">Type</label>
+          <div className="grid grid-cols-2 gap-1">
             {REPORT_TYPES.map((t) => (
               <button
                 key={t.value}
                 type="button"
                 onClick={() => setReportType(t.value)}
-                className={`text-[11px] px-5 py-3.5 rounded-2xl text-left transition-all border font-black uppercase tracking-wide ${reportType === t.value
-                  ? 'bg-blue-50 border-blue-200 text-blue-600 shadow-sm'
-                  : 'bg-gray-50 border-transparent text-gray-400 hover:text-gray-600 hover:bg-gray-100'
-                  }`}
+                className={`text-[11px] px-2 py-1.5 rounded text-left transition-colors ${
+                  reportType === t.value
+                    ? 'bg-teal-500/15 text-teal-400 font-medium'
+                    : 'bg-white/[0.03] text-gray-400 hover:bg-white/[0.06]'
+                }`}
               >
                 {t.label}
               </button>
@@ -128,47 +127,41 @@ export default function ReportModal({ onReported }) {
         </div>
 
         <div>
-          <div className="flex items-center justify-between mb-4">
-            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Severity Index</label>
-            <span className={`text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-widest ${severity >= 4 ? 'bg-rose-50 text-rose-600' :
-              severity >= 3 ? 'bg-amber-50 text-amber-600' :
-                'bg-emerald-50 text-emerald-600'
-              }`}>{severity} / 5</span>
+          <div className="flex items-center justify-between mb-1.5">
+            <label className="text-[11px] text-gray-400 font-medium">Severity</label>
+            <span className="text-[11px] font-mono text-gray-500">{severity}/5</span>
           </div>
-          <div className="flex gap-2.5 h-1.5">
+          <div className="flex gap-1">
             {[1, 2, 3, 4, 5].map((n) => (
               <button
                 key={n}
                 type="button"
                 onClick={() => setSeverity(n)}
-                className={`flex-1 rounded-full transition-all duration-500 ${n <= severity
-                  ? severity >= 4 ? 'bg-rose-500 shadow-lg shadow-rose-200' :
-                    severity >= 3 ? 'bg-amber-500 shadow-lg shadow-amber-200' :
-                      'bg-emerald-500 shadow-lg shadow-emerald-200'
-                  : 'bg-gray-100'
-                  }`}
+                className={`flex-1 h-1.5 rounded-full transition-colors ${
+                  n <= severity ? 'bg-teal-500' : 'bg-white/[0.06]'
+                }`}
               />
             ))}
           </div>
         </div>
 
         <div>
-          <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4">Tactical Notes</label>
+          <label className="block text-[11px] text-gray-400 mb-1.5 font-medium">Notes</label>
           <textarea
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            placeholder="Provide context for the grid..."
-            rows={3}
-            className="w-full bg-gray-50 border border-gray-100 rounded-2xl px-5 py-4 text-sm text-gray-900 placeholder:text-gray-300 focus:outline-none focus:ring-4 focus:ring-blue-500/5 focus:border-blue-500 transition-all font-bold resize-none"
+            placeholder="Optional details..."
+            rows={2}
+            className="w-full bg-white/[0.03] border border-white/[0.06] rounded px-2.5 py-2 text-[12px] text-gray-200 placeholder-gray-600 focus:outline-none focus:border-teal-500/40 resize-none"
           />
         </div>
 
         <button
           type="submit"
           disabled={submitting || !isAuthenticated}
-          className="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-40 text-white text-[10px] font-black uppercase tracking-[0.2em] py-5 rounded-2xl shadow-xl shadow-blue-500/25 transition-all mt-4 active:scale-95"
+          className="w-full bg-teal-600 hover:bg-teal-500 disabled:opacity-40 text-white text-[12px] font-medium py-2 rounded transition-colors"
         >
-          {submitting ? 'Transmitting...' : 'Upload Intelligence →'}
+          {submitting ? 'Saving...' : 'Submit'}
         </button>
       </form>
     </div>
