@@ -1,5 +1,4 @@
 import CarbonComparison from './CarbonComparison';
-import MarketIntelligence from './MarketIntelligence';
 import { useState } from 'react';
 import { routeApi } from '../../api';
 import toast from 'react-hot-toast';
@@ -231,10 +230,6 @@ export default function RoutePlanner() {
             />
           </div>
 
-          {/* Market Intelligence */}
-          <div className="px-5 py-5 border-t border-white/[0.04]">
-            <MarketIntelligence autoLoad={false} />
-          </div>
         </div>
 
         {/* Main content */}

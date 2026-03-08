@@ -2,6 +2,8 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, AreaChart, Area,
 } from 'recharts';
+import MarketIntelligence from './MarketIntelligence';
+
 
 const TYPE_LABELS = {
   near_miss: 'Near miss',
@@ -111,6 +113,11 @@ export default function DashboardCharts({ stats }) {
           <Bar dataKey="segments" fill="#60a5fa" radius={[3, 3, 0, 0]} barSize={28} />
         </BarChart>
       </ChartCard>
+      {/* Market Intelligence */}
+      <div className="lg:col-span-3">
+        <MarketIntelligence autoLoad={false} />
+      </div>
+
     </div>
   );
 }
