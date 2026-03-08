@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useAuth0 } from '@auth0/auth0-react';
 
 const API_BASE = "http://localhost:5000/api";
 
@@ -83,6 +84,7 @@ function MiniChart({ data }) {
 }
 
 export default function MarketIntelligence({ autoLoad = false }) {
+    const { isAuthenticated, loginWithRedirect: login } = useAuth0();
     const [intel, setIntel] = useState(null);
     const [forecast, setForecast] = useState(null);
     const [loading, setLoading] = useState(false);
@@ -115,7 +117,7 @@ export default function MarketIntelligence({ autoLoad = false }) {
         }
     }
 
-    useEffect(() => { if (autoLoad) load(); }, []);
+    useEffect(() => { if (autoLoad && isAuthenticated) load(); }, [autoLoad, isAuthenticated]);
 
     const recColor = intel?.recommendation === "fill_now" ? "#f87171"
         : intel?.recommendation === "wait" ? "#14b8a6" : "#fbbf24";
@@ -139,14 +141,15 @@ export default function MarketIntelligence({ autoLoad = false }) {
                     </div>
                 </div>
                 {!loading && (
-                    <button onClick={load} style={{
+                    <button onClick={load} disabled={!isAuthenticated} style={{
                         background: "transparent",
                         border: "1px solid #2d3748",
                         color: "#64748b",
                         borderRadius: 4,
                         padding: "4px 10px",
                         fontSize: 10,
-                        cursor: "pointer",
+                        cursor: isAuthenticated ? "pointer" : "not-allowed",
+                        opacity: isAuthenticated ? 1 : 0.4,
                         fontFamily: "inherit",
                         letterSpacing: "0.05em",
                     }}>
@@ -154,6 +157,38 @@ export default function MarketIntelligence({ autoLoad = false }) {
                     </button>
                 )}
             </div>
+
+            {!isAuthenticated && (
+                <div style={{
+                    marginBottom: 12,
+                    borderRadius: 6,
+                    border: "1px solid rgba(255,255,255,0.08)",
+                    background: "rgba(255,255,255,0.03)",
+                    padding: 10
+                }}>
+                    <p style={{ fontSize: 11, color: "#d1d5db", margin: "0 0 8px 0" }}>
+                        You need to log in to access Market Intelligence.
+                    </p>
+                    <button
+                        type="button"
+                        onClick={() => login()}
+                        style={{
+                            width: "100%",
+                            background: "#0d9488",
+                            color: "white",
+                            fontSize: 12,
+                            fontWeight: 500,
+                            padding: "6px 0",
+                            borderRadius: 4,
+                            border: "none",
+                            cursor: "pointer",
+                            transition: "background-color 0.2s"
+                        }}
+                    >
+                        Log in
+                    </button>
+                </div>
+            )}
 
             {loading && (
                 <div style={{ textAlign: "center", padding: "20px 0", color: "#64748b", fontSize: 12 }}>
