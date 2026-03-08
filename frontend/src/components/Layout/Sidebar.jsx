@@ -29,6 +29,13 @@ const CommuteIcon = () => (
   </svg>
 );
 
+const AuthIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" />
+    <circle cx="12" cy="7" r="4" />
+  </svg>
+);
+
 const navItems = [
   { to: '/', label: 'Map', Icon: MapIcon },
   { to: '/dashboard', label: 'Analytics', Icon: ChartIcon },
@@ -144,7 +151,7 @@ export default function Sidebar({ collapsed, onToggle }) {
       </aside>
 
       <nav className="fixed bottom-0 left-0 right-0 z-[2200] md:hidden bg-[#10131a]/95 backdrop-blur border-t border-white/[0.08] pb-[max(env(safe-area-inset-bottom),0.4rem)]">
-        <div className="grid grid-cols-4">
+        <div className="grid grid-cols-5">
           {navItems.map((item) => (
             <NavLink
               key={item.to}
@@ -159,6 +166,14 @@ export default function Sidebar({ collapsed, onToggle }) {
               <span>{item.label}</span>
             </NavLink>
           ))}
+          <button
+            type="button"
+            onClick={isAuthenticated ? logout : () => login()}
+            className="flex flex-col items-center justify-center gap-1 py-2.5 text-[11px] transition-colors text-gray-500 hover:text-gray-300"
+          >
+            <AuthIcon />
+            <span>{isAuthenticated ? 'Logout' : 'Sign in'}</span>
+          </button>
         </div>
       </nav>
     </>
