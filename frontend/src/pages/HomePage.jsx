@@ -136,6 +136,8 @@ export default function HomePage() {
 
           {route && <RouteLayer route={route} />}
         </MapContainer>
+      </div>
+
       {/* Floating Mode Toggle Top Left */}
       <div className="absolute top-6 left-6 z-[1001] pointer-events-none">
         <div className="pointer-events-auto flex flex-col gap-3">
@@ -251,6 +253,6 @@ export default function HomePage() {
           )}
         </div>
       </div>
-    </div>
+    </div >
   );
 }

@@ -72,6 +72,9 @@ export default function DashboardPage() {
       </div>
     </div>
 
+  </div>
+
+
         {/* Top Tier: Critical Metrics */}
         <div className="mb-16">
           <StatsCards stats={stats} />
