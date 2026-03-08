@@ -4,6 +4,7 @@ const { decode } = require('@googlemaps/polyline-codec');
 
 const ROUTES_API = 'https://routes.googleapis.com/directions/v2:computeRoutes';
 const GAS_PRICES = { regular: 1.65, premium: 1.85, diesel: 1.72 };
+// const gasPrice = GAS_PRICES[fuelType] || GAS_PRICES.regular;
 const FIELD_MASK = [
   'routes.duration',
   'routes.distanceMeters',
@@ -343,7 +344,9 @@ router.post('/plan', async (req, res) => {
       return res.status(400).json({ error: 'origin and destination are required' });
     }
 
-    const gasPrice = GAS_PRICES[fuelType] || GAS_PRICES.regular;
+    // const gasPrice = GAS_PRICES[fuelType] || GAS_PRICES.regular;
+    const prices = await fetchOntarioPrices();
+    const gasPrice = prices.toronto / 100; // convert ¢ to $
 
     const [fastestRaw, cheapestRaw, safestRaw] = await Promise.all([
       fetchRoute(origin, destination, { travelMode: 'DRIVE' }),
