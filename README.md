@@ -2,6 +2,8 @@
 
 UrbanFlow is a smart city navigation app that finds you routes by speed, safety, or cost while showing bike-safe paths, danger zones, cheaper gas, and open parking for easier commuting.
 
+[https://urban.lukasdsouza.com/](https://urban.lukasdsouza.com/)
+
 ## Key Features
 
 1.  **Dashboard Analytics**: Top-level metrics on congestion, accidents over time, and predictive models.
@@ -24,9 +26,6 @@ Currently configured for production deployment on this branch (`deploy-test`):
 *   **Frontend Hosting**: We used Vultr
 *   **Backend Hosting**: We used Vultr
 *   **Database**: MongoDB Atlas
-
-### CORS Configuration
-The backend is currently allowing CORS requests from `localhost`, `.vercel.app`, and `.netlify.app` domains.
 
 ## Local Development
 
