@@ -1,40 +1,40 @@
-# UrbanFlow - Smart Mobility System 🏙️
+# UrbanFlow
 
-UrbanFlow is a unified, intelligent mobility dashboard for the Greater Toronto Area (GTA) and beyond. Built during Hack Canada, it aggregates live traffic data, fuel prices, routing intelligence, and carbon impact into a sleek, dark-themed dashboard.
+UrbanFlow is a smart city navigation app that finds you routes by speed, safety, or cost while showing bike-safe paths, danger zones, cheaper gas, and open parking for easier commuting.
 
-> **Current Branch**: `deploy-test` (Production candidate)
-
-## ✨ Key Features
+## Key Features
 
 1.  **Dashboard Analytics**: Top-level metrics on congestion, accidents over time, and predictive models.
-2.  **Carbon Cost Navigator**: A unique routing tool that compares driving vs. cycling, calculating actual fuel costs, predicted CO₂ emissions, and safety scores based on protected bike lanes using Toronto Open Data.
-3.  **Market Intelligence**: An AI-powered (Claude 3.5 Sonnet) tool that analyzes live worldwide news and 8 years of local Ontario pricing data to recommend the best time to refuel. It even includes a statistical volatility forecast.
-4.  **Interactive Maps**: Heatmaps of dangerous intersections and live routing leveraging Leaflet.
+2.  **Carbon Cost Calculator**: A routing tool that compares driving vs. cycling, calculating actual fuel costs, predicted CO2 emissions, and safety scores based on protected bike lanes using Toronto Open Data.
+3.  **Market Intelligence**: An AI-powered (Claude 4.5 Sonnet) tool that analyzes live worldwide news and 8 years of local Ontario pricing data to recommend the best times to refuel. It includes a projected price chart.
+4.  **Interactive Maps**: Heatmaps of dangerous road zones and live routing using Leaflet and the Google Maps API.
 
-## 🛠️ Tech Stack & Tools
+## Tech Stack & Tools
 
-*   **Frontend**: React 19, Vite, Tailwind CSS v4, Recharts, React-Leaflet, Auth0 (for Market Intelligence).
-*   **Backend**: Node.js, Express, MongoDB/Mongoose.
-*   **APIs & Data**: Google Maps Routes API (directions & polyline decoding), Overpass API/OpenStreetMap (gas station locations), Ontario Open Data (CSV parsing for fuel prices), Claude API (Market Intelligence).
+*   **Authentication**: Auth0
+*   **Frontend**: React, Vite, Tailwind CSS, Recharts, Leaflet.js
+*   **Backend**: Node.js, Express, Mongoose
+*   **Database**: MongoDB
+*   **APIs & Data**: Google Maps Routes API, Overpass API/OpenStreetMap, Ontario Open Data (Toronto, Waterloo, Kitchener), Claude API
 
-## 🚀 Deployment Status
+## Deployment Status
 
 Currently configured for production deployment on this branch (`deploy-test`):
 
-*   **Frontend Hosting**: (E.g., Vercel / Netlify / Render - *Update with actual URL once deployed*)
-*   **Backend Hosting**: (E.g., Render / Heroku / DigitalOcean - *Update with actual URL once deployed*)
+*   **Frontend Hosting**: We used Vultr
+*   **Backend Hosting**: We used Vultr
 *   **Database**: MongoDB Atlas
 
 ### CORS Configuration
 The backend is currently allowing CORS requests from `localhost`, `.vercel.app`, and `.netlify.app` domains.
 
-## 💻 Local Development
+## Local Development
 
 1.  **Clone the Repo**:
     ```bash
     git clone https://github.com/yourusername/Hack-Canada-Project.git
     cd Hack-Canada-Project
-    git checkout deploy-test
+    git checkout deploy
     ```
 2.  **Install dependencies**:
     ```bash
